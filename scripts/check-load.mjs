@@ -4,17 +4,30 @@
 // compared. Run against `next start` to see what a deployed visit feels like.
 //
 //   node scripts/check-load.mjs [lens …]        (LAB_URL defaults to :3240)
+//   GL=gpu node scripts/check-load.mjs          (the machine's real GPU, not SwiftShader)
 
 import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright-core";
 
 const BASE = process.env.LAB_URL ?? "http://localhost:3240";
-const OUT = "shots/load";
+const GPU = process.env.GL === "gpu";
+const OUT = GPU ? "shots/load-gpu" : "shots/load";
 const ALL = ["member", "coach", "circles", "partner", "impact", "founder", "future", "xray", "build", "vision"];
 const LENSES = process.argv.length > 2 ? process.argv.slice(2) : ALL;
 await mkdir(OUT, { recursive: true });
 
-const browser = await chromium.launch({ channel: "msedge", headless: true, args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
+const args = GPU ? ["--ignore-gpu-blocklist"] : ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"];
+const browser = await chromium.launch({ channel: "msedge", headless: true, args });
+{
+  const probe = await browser.newPage();
+  const renderer = await probe.evaluate(() => {
+    const gl = document.createElement("canvas").getContext("webgl2");
+    const info = gl?.getExtension("WEBGL_debug_renderer_info");
+    return info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl ? "unknown" : "no WebGL";
+  });
+  console.log(`renderer: ${renderer}`);
+  await probe.close();
+}
 let failed = 0;
 for (const lens of LENSES) {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });

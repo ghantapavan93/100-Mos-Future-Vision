@@ -4,6 +4,7 @@
 // all eleven can be compared at a glance.
 //
 //   node scripts/heroes.mjs [outDir=shots/heroes]
+//   GL=gpu node scripts/heroes.mjs              (the machine's real GPU, not SwiftShader)
 
 import { mkdir } from "node:fs/promises";
 import { chromium } from "playwright-core";
@@ -14,7 +15,8 @@ const OUT = process.argv[2] ?? "shots/heroes";
 const ROUTES = ["", "member", "circles", "partner", "founder", "future", "vision", "coach", "impact", "xray", "build"];
 await mkdir(OUT, { recursive: true });
 
-const browser = await chromium.launch({ channel: "msedge", headless: true, args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
+const args = process.env.GL === "gpu" ? ["--ignore-gpu-blocklist"] : ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"];
+const browser = await chromium.launch({ channel: "msedge", headless: true, args });
 const phones = [];
 for (const [w, h] of [[1440, 900], [390, 844]]) {
   const mobile = w < 600;
