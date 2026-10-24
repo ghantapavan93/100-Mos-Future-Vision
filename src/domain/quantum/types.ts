@@ -1,0 +1,117 @@
+// QUANTUM is a name, not a technology: there is no quantum computing and, in
+// this demo, no language model. Answers come from a deterministic composer over
+// reviewed or clearly-labelled content, and a validator checks every draft. The
+// contracts below are the ones a live model would have to satisfy too.
+
+import type { ActivitySource, EventId, RacePath, RulesetVersion } from "../types";
+
+export type Intent =
+  | "start"
+  | "restart"
+  | "first-5k"
+  | "race-big"
+  | "community"
+  | "rest"
+  | "heat"
+  | "pain"
+  | "medical"
+  | "crisis"
+  | "wellbeing"
+  | "nutrition"
+  | "privacy"
+  | "kayla"
+  | "injection"
+  | "general";
+
+export type Safety = "ok" | "support" | "refer" | "urgent";
+
+export type CardStatus =
+  /** Paraphrase of a published public-health guideline, with citation. */
+  | "public-guideline"
+  /** A program rule the team proposes; needs a certified coach's review. */
+  | "proposed-rule"
+  /** A lesson the team drafted in the spirit of Kayla's public themes. NOT her words. Needs her review. */
+  | "proposed-lesson"
+  /** Crisis and care resources. */
+  | "resource";
+
+export interface KnowledgeCard {
+  id: string;
+  title: string;
+  body: string;
+  status: CardStatus;
+  /** Where the content comes from. */
+  source: string;
+  url?: string;
+  /** Who must approve before this could ship. */
+  needsReviewBy: string | null;
+  /** Rulesets that include this card. */
+  rulesets: RulesetVersion[];
+}
+
+export type BlockKind = "heard" | "know" | "step" | "boundary" | "support";
+
+export interface AnswerBlock {
+  kind: BlockKind;
+  text: string;
+  cardId?: string;
+}
+
+export type NextStepAction =
+  | { type: "save" }
+  | { type: "rsvp"; eventId: EventId }
+  | { type: "race-path"; racePath: RacePath }
+  | { type: "open"; lens: "circles" | "coach" };
+
+export interface NextStep {
+  label: string;
+  /** Proposed only. Nothing happens until the member taps it. */
+  action: NextStepAction;
+  cardId: string;
+}
+
+export interface ContextLine {
+  source: ActivitySource;
+  records: number;
+  miles: number;
+}
+
+export interface CoachContext {
+  /** Sources the coach was allowed to read, with consent. */
+  included: ContextLine[];
+  /** Sources that exist for this member but were kept out, with the rule that kept them out. */
+  excluded: (ContextLine & { ruleId: string })[];
+  /** One sentence the composer may use, built only from included sources. */
+  summary: string | null;
+}
+
+export interface Check {
+  id: string;
+  pass: boolean;
+  detail: string;
+}
+
+export interface CoachAnswer {
+  id: string;
+  memberId: string;
+  question: string;
+  ruleset: RulesetVersion;
+  /** The intent the answer was written for. "general" when the question wasn't understood well enough. */
+  intent: Intent;
+  safety: Safety;
+  /** What the rules matched, before the low-confidence guard (may differ from `intent`). */
+  classifiedAs: Intent;
+  /** Low when the words carried a concern the matched intent can't address; the answer is then the safe default. */
+  confidence: "high" | "low";
+  /** The phrases that decided the intent, for "why this?". */
+  matched: string[];
+  context: CoachContext;
+  cards: string[];
+  blocks: AnswerBlock[];
+  nextStep: NextStep | null;
+  checks: Check[];
+  /** When the drafting step produced something unsafe and the validator replaced it. */
+  rejectedDraft: { text: string; failed: string[] } | null;
+  generator: "deterministic-composer";
+  attributions: string[];
+}
