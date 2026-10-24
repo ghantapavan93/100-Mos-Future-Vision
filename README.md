@@ -4,6 +4,8 @@ Where 100 Miles of Summer can go in Year 10 and beyond, as a working front end.
 Eleven screens, each with a live 3D hero and a phone you can tap, all driven by
 one shared engine. People and walks are sample data. It runs fully offline.
 
+**Live:** https://100-mos-future-vision.vercel.app
+
 > Concept work. Not an official 100 Miles of Summer product. The brand mark and
 > community photos are used with the team's permission.
 
@@ -56,7 +58,19 @@ Requires Node 22.
 | `npm run check:browser` | Every browser check against the dev server |
 
 Browser checks write screenshots and logs to `shots/` (git-ignored).
-Set `LAB_URL` to run them against another server.
+Set `LAB_URL` to run them against another server, such as the live site.
+`GL=gpu` runs the load and hero captures on the machine's real GPU instead
+of SwiftShader:
+
+```bash
+GL=gpu LAB_URL=https://100-mos-future-vision.vercel.app node scripts/check-load.mjs
+```
+
+## Deploy
+
+Vercel, connected to this repo: every push to `main` deploys to production.
+All routes are static, served from the edge cache. Posters, renders and
+photos carry a one-day cache with a week of stale-while-revalidate.
 
 ## Architecture
 
@@ -122,4 +136,6 @@ scripts/          browser checks, screenshots, poster rendering
 - **Money figures are planning ranges**, not forecasts or prices.
 - **Accessibility** is checked by keyboard and automated checks only, not
   yet with a screen reader.
-- **3D timing** was measured in a software renderer. Real GPUs are faster.
+- **3D timing** on the live site, with an integrated AMD Radeon GPU: posters
+  paint in about 0.5 s, and live 3D takes over in 1.0–2.6 s at the high tier.
+  Not yet measured on a phone GPU.
