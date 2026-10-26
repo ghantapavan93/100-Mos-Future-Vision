@@ -12,6 +12,7 @@ import { useCallback, useMemo, useState } from "react";
 import { economics, usd } from "@/domain/finance";
 import { programHeadline } from "@/domain/plans";
 import { partnerView } from "@/domain/selectors";
+import { CommissionTeaser } from "@/components/commission/CommissionTeaser";
 import { DataStrip } from "@/components/demo/DataStrip";
 import { HowWeBuild } from "@/components/demo/HowWeBuild";
 import { Ideas } from "@/components/demo/Ideas";
@@ -192,6 +193,8 @@ export function PartnerStudio() {
           </div>
         }
       />
+
+      <CommissionTeaser />
 
       <YearTenMath index="02" />
 

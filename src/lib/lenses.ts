@@ -60,7 +60,12 @@ export function lensesIn(act: ActId): LensDef[] {
   return LENSES.filter((l) => l.act === act);
 }
 
+/** Pages that belong to a screen without a place of their own in the navigation. */
+const BELONGS_TO: Record<string, string> = { "/commission": "/partner" };
+
 export function lensFor(pathname: string): LensDef {
   if (pathname === "/") return LENSES[0]!;
+  const parent = Object.entries(BELONGS_TO).find(([path]) => pathname.startsWith(path))?.[1];
+  if (parent) return LENSES.find((l) => l.href === parent)!;
   return LENSES.find((l) => l.href !== "/" && pathname.startsWith(l.href)) ?? LENSES[0]!;
 }

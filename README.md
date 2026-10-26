@@ -20,6 +20,7 @@ approved tips and safety rules. People and walks are sample data.
 | `/member` | Member app | Logging that counts once, sharing switches, a note to your September self. |
 | `/circles` | City Circles | A no-app first walk, walks that fit you, a City Lead co-pilot, check-in. |
 | `/partner` | Sponsors | Fund a city in five taps, where each dollar goes, the Year 10 money. |
+| `/commission` | One commission, three cities | One buyer's program end to end: who covers each city, a refused data request, a counter-offer, a heat day, the Community Value Report, next summer's price. Opens from Sponsors. |
 | `/founder` | Kayla's week | City Leads, the few decisions only the founder makes, money in vs promised. |
 | `/future` | Next 3 summers | A pilot season with go / fix / stop lines, the team in hiring order. |
 | `/vision` | Big picture | A seven-scene living city, five summers, an ideas map. |
@@ -172,6 +173,7 @@ src/
     <screen>/     one folder per screen (member, circles, partner, …)
   domain/         the engine: commands, policy, erasure, projections, plans
     quantum/      the coach: classifier, cards, composer, validator, evals, AI checks
+    commission/   one buyer, several cities: readiness, delivery, money, the value report
   app/api/coach/  the AI step (server)
   lib/            client store, lenses, the coach's AI client
 public/

@@ -45,7 +45,7 @@ export const viewport: Viewport = {
  * never flashes the story's dawn colours. Mirrors lensFor() in src/lib/lenses.ts.
  */
 const MODE_SCRIPT = `(function(){var s=location.pathname.split("/")[1]||"";
-var modes={member:"day",coach:"day",build:"day",circles:"golden",partner:"golden",impact:"golden",founder:"night",future:"night",xray:"night"};
+var modes={member:"day",coach:"day",build:"day",circles:"golden",partner:"golden",commission:"golden",impact:"golden",founder:"night",future:"night",xray:"night"};
 document.documentElement.dataset.mode=modes[s]||"dawn";})();`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
