@@ -73,7 +73,7 @@ export function SafetyProof({ id = "proof", index = "04", ruleset }: { id?: stri
             title="Never a step backwards"
             line="A new set of tips may run the guided questions only if every test that passed before still passes, and no tip says anything unsafe."
             open={regression ? regression.pass : true}
-            status={regression ? (regression.pass ? `Open for ${ruleset}: no regressions.` : `Closed: ${regression.regressions.length} regressions.`) : `${ruleset} is the baseline the next version must beat.`}
+            status={regression ? (regression.pass ? `Open for ${ruleset}: no regressions.` : `Closed: ${regression.regressions.length} regressions.`) : "Today's tips set the bar every new set has to clear."}
           />
         </Reveal>
         <Reveal delay={160}>

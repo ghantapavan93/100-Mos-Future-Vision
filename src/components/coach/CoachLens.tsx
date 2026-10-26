@@ -139,7 +139,7 @@ export function CoachLens() {
       <Hero
         mode="day"
         eyebrow="Quantum Health Coach"
-        title="An AI coach that *knows your summer.*"
+        title="AI that *knows your summer.*"
         lede="Ask it anything about moving this summer. It reads only what you share, answers in plain, kind words from tips Kayla says yes to — and stops for pain or crisis, every time."
         actions={
           <Story

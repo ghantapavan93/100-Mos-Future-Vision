@@ -82,7 +82,7 @@ await page.evaluate(() => sessionStorage.clear());
 await page.reload({ waitUntil: "networkidle" });
 
 await step("the page opens on the hero, three numbers and the coach phone, with no lab in sight", async () => {
-  await visible(page.getByRole("heading", { level: 1, name: /An AI coach that knows your summer\./ }), "the headline");
+  await visible(page.getByRole("heading", { level: 1, name: /AI that knows your summer\./ }), "the headline");
   if (!/^Quantum Health Coach/.test(await page.title())) throw new Error(`page title: ${await page.title()}`);
   await visible(page.getByText("Waiting for Kayla's OK — once, before May 1"), "the approval time in the legend");
   await visible(page.getByRole("region", { name: "In numbers" }).getByText("#1", { exact: true }), "the enjoyment number");

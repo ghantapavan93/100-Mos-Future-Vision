@@ -50,7 +50,7 @@ const STOPS: Stop[] = [
   {
     title: "AI writes",
     line: "Writes the kind, personal part in plain words. It never adds a fact, a plan or a diagnosis.",
-    live: (a) => (a.generator === "ai-model" ? "Written by AI" : isSafeStop(a) ? "Not asked — rules only" : aiAsked(a) ? "Draft refused — tips answered alone" : "AI off — tips answered alone"),
+    live: (a) => (a.generator === "ai-model" ? "Written by AI" : isSafeStop(a) ? "Not asked — rules only" : aiAsked(a) ? "Draft refused — tips answered alone" : "Approved tips answered this one"),
     reached: (a) => a.generator === "ai-model",
   },
   {

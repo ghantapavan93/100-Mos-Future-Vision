@@ -50,7 +50,7 @@ export function CoachTab({ view, world, onTab }: { view: MemberView; world: Worl
         <p className="mt-2 text-[13.5px] leading-snug text-muted">Pick a question. You get a short answer, where it comes from, and one small step you can choose to take.</p>
         {status === "checking" ? null : (
           <p className={cn("mt-2 w-fit rounded-full px-3 py-1 text-[12px] font-bold", status === "on" ? "bg-accent/15 text-accent-ink" : "bg-surface-2 text-muted")}>
-            {status === "on" ? "✦ AI on · every word checked" : "Approved tips only today"}
+            {status === "on" ? "✦ AI on · every word checked" : "Answering from approved tips"}
           </p>
         )}
         <div className="mt-4 flex flex-col gap-2">

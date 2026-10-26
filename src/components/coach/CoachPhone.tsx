@@ -262,7 +262,7 @@ function AiPill({ status }: { status: AiStatus }) {
   return (
     <div className="mt-2 flex justify-start" data-testid="ai-status" data-ai={status}>
       <span className={cn("rounded-full px-3 py-1 text-[12px] font-bold", status === "on" ? "bg-accent/15 text-accent-ink" : "bg-surface-2 text-muted")}>
-        {status === "on" ? "✦ AI on · every word checked before you see it" : "Approved tips only today · the AI is switched off"}
+        {status === "on" ? "✦ AI on · every word checked before you see it" : "Answering from approved tips today"}
       </span>
     </div>
   );
