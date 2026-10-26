@@ -1,8 +1,11 @@
 # 100 Miles of Summer — Future Vision
 
+[![CI](https://github.com/ghantapavan93/100-Mos-Future-Vision/actions/workflows/ci.yml/badge.svg)](https://github.com/ghantapavan93/100-Mos-Future-Vision/actions/workflows/ci.yml)
+
 Where 100 Miles of Summer can go in Year 10 and beyond, as a working front end.
 Eleven screens, each with a live 3D hero and a phone you can tap, all driven by
-one shared engine. People and walks are sample data. It runs fully offline.
+one shared engine — plus the Quantum Health Coach, an AI coach kept inside
+approved tips and safety rules. People and walks are sample data.
 
 **Live:** https://100-mos-future-vision.vercel.app
 
@@ -20,12 +23,15 @@ one shared engine. People and walks are sample data. It runs fully offline.
 | `/founder` | Kayla's week | City Leads, the few decisions only the founder makes, money in vs promised. |
 | `/future` | Next 3 summers | A pilot season with go / fix / stop lines, the team in hiring order. |
 | `/vision` | Big picture | A seven-scene living city, five summers, an ideas map. |
-| `/coach` | Ask a question | Short, kind answers from approved tips, with a clear stop when it matters. |
+| `/coach` | AI Coach | The Quantum Health Coach: kind, personal answers inside approved tips, every word checked, Safe Stop for pain and crisis. |
 | `/impact` | Giving back | Sponsor money that stays in the neighborhood, proven by a real walk. |
 | `/xray` | How miles count | One walk, seven checks, counted once across apps, with replay. |
 | `/build` | Roadmap | What works today, quick fixes, six steps to May 1, 2027. |
 
-The header **Tour** walks every stop and runs the real commands on each phone.
+The screens are grouped into five acts — the first mile; members and community;
+the AI coach and the work; sponsors and money; the future and proof — and Home
+maps them on one page. The header **Tour** ("One Saturday", 14 stops) runs the
+real commands on each phone, including a walk called off for heat.
 
 ## Stack
 
@@ -35,7 +41,8 @@ The header **Tour** walks every stop and runs the real commands on each phone.
 - **Vitest** + fast-check for unit and property tests
 - **playwright-core** for browser checks (uses the installed Edge)
 
-Every route prerenders as static HTML. No APIs, keys or map tiles.
+Every screen prerenders as static HTML. The one server route is the coach's
+AI step (`/api/coach`), and it is off until a key is set.
 
 ## Getting started
 
@@ -68,9 +75,41 @@ GL=gpu LAB_URL=https://100-mos-future-vision.vercel.app node scripts/check-load.
 
 ## Deploy
 
-Vercel, connected to this repo: every push to `main` deploys to production.
-All routes are static, served from the edge cache. Posters, renders and
-photos carry a one-day cache with a week of stale-while-revalidate.
+Vercel, connected to this repo: every push to `main` deploys to production,
+and CI runs typecheck, tests and build on every push and pull request. Pages
+are static, served from the edge cache. Posters, renders and photos carry a
+one-day cache with a week of stale-while-revalidate.
+
+To switch the AI coach on, add `ANTHROPIC_API_KEY` in the Vercel project's
+environment variables and redeploy. Without it, the approved tips answer alone
+and the phone says so.
+
+## The AI coach
+
+```
+question ─▶ classify ──▶ safety first ──▶ AI drafts ──▶ every check ──▶ answer
+            (topic)      pain, crisis,     kind lines     diagnosis,       with
+                         food, others'     + approved     prescription,    "who says"
+                         data: rules only  tip ids        new facts, …
+```
+
+- **The AI writes the kind part, never the facts.** `/api/coach` asks Claude
+  for one or two personal lines and which approved tips fit, as JSON. The tips
+  appear in their own words.
+- **Some topics never reach the model.** The same classifier runs on the
+  server and in the engine: pain, crisis, health conditions, food, other
+  members' data and anything not understood get the fixed, reviewed answer.
+- **The engine decides.** The AI's draft is a proposal on the `ASK_COACH`
+  command. The validator runs every check on it — plus no new facts or
+  numbers, approved tips only, no links. One failure and the approved tips
+  answer alone. The answer records which it was.
+- **Two locks.** A new set of tips must pass the regression gate (nothing that
+  passed before may fail). Typing free text also needs the absolute safety
+  gate: every safety-critical test passes, old misses included. "No worse
+  than before" never counts as "safe".
+- **Private by design.** The model sees the member's first name and the
+  summary they chose to share — never Strava, never other members. The AI's
+  words stay out of the audit trail, and "Forget what I asked" erases them.
 
 ## Architecture
 
@@ -117,8 +156,9 @@ src/
     story/        home page
     <screen>/     one folder per screen (member, circles, partner, …)
   domain/         the engine: commands, policy, erasure, projections, plans
-    quantum/      the coach: classifier, cards, composer, validator, evals
-  lib/            client store and lenses
+    quantum/      the coach: classifier, cards, composer, validator, evals, AI checks
+  app/api/coach/  the AI step (server)
+  lib/            client store, lenses, the coach's AI client
 public/
   brand/          logo and community photos
   posters/        first frame of each 3D hero, wide and tall
@@ -129,10 +169,14 @@ scripts/          browser checks, screenshots, poster rendering
 
 ## Known limits
 
-- **No language model.** The coach is a deterministic composer behind a
-  model-ready contract. Free text stays behind a release gate.
-- **The engine runs in the browser.** In production the same rules would live
-  server-side: one ingest function, row-level rules, a totals view.
+- **The AI needs a key, and its words are measured only by the checks.** The
+  live model path is tested for its gates, not yet against real model output
+  at scale. Free text stays closed until the safety gate passes.
+- **The engine runs in the browser.** Roles and receipts here are a
+  simulation, not security: the hash chain uses FNV-1a (not cryptographic),
+  and anyone can edit client state. In production the same rules would live
+  server-side: one ingest function, row-level rules, a totals view, signed
+  receipts.
 - **Money figures are planning ranges**, not forecasts or prices.
 - **Accessibility** is checked by keyboard and automated checks only, not
   yet with a screen reader.
