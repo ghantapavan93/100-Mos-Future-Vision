@@ -16,7 +16,7 @@ import { STATE_LABEL, STATION, actorLabel, failStage, humanPath, isRedacted, rea
 
 const LENS_ROUTE: Record<Lens, { href: string; label: string }> = {
   member: { href: "/member", label: "Member app" },
-  coach: { href: "/coach", label: "Ask a question" },
+  coach: { href: "/coach", label: "AI Coach" },
   circles: { href: "/circles", label: "City Circles" },
   partner: { href: "/partner", label: "Sponsors" },
   impact: { href: "/impact", label: "Giving back" },

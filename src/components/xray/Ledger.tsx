@@ -16,7 +16,7 @@ const OUTCOMES: Outcome[] = ["applied", "noop", "rejected", "blocked", "deferred
 /** The screens, named as the nav names them. */
 const LENS_LABEL: Record<Lens, string> = {
   member: "Member",
-  coach: "Ask a question",
+  coach: "AI Coach",
   circles: "Circles",
   partner: "Sponsors",
   impact: "Giving back",

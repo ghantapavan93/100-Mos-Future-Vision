@@ -7,7 +7,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { InspectDrawer } from "@/components/inspect/Inspect";
 import { OUTCOME_WORDS, plain } from "@/components/demo/plain";
 import { cn } from "@/components/ui/kit";
-import { lensFor, LENSES } from "@/lib/lenses";
+import { ACTS, lensFor, LENSES, lensesIn } from "@/lib/lenses";
 import { store, useUI } from "@/lib/store";
 import { PresentOverlay } from "@/components/present/Present";
 
@@ -108,18 +108,29 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
         </div>
         {menu ? (
-          <nav aria-label="Lenses" className="border-t border-line bg-bg px-4 pb-4 pt-2 min-[1400px]:hidden">
-            <ul className="grid grid-cols-2 gap-1 sm:grid-cols-3">
-              {LENSES.map((l) => (
-                <li key={l.href}>
-                  <Link href={l.href} aria-current={l === lens ? "page" : undefined} className={cn("tap flex flex-col justify-center rounded-xl px-3 py-2", l === lens ? "bg-ink text-bg" : "hover:bg-surface-2")}>
-                    <span className="text-[15px] font-semibold">{l.label}</span>
-                    <span className={cn("text-[12px]", l === lens ? "opacity-75" : "text-muted")}>For {l.who}</span>
-                  </Link>
+          <nav aria-label="Lenses" className="max-h-[calc(100svh-56px)] overflow-y-auto border-t border-line bg-bg px-4 pb-4 pt-3 min-[1400px]:hidden">
+            {/* The five acts, in story order: the same grouping as the map on Home. */}
+            <ol className="grid gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-5">
+              {ACTS.map((act) => (
+                <li key={act.id}>
+                  <div className="flex items-baseline gap-2 px-1">
+                    <span className="num text-[12px] font-black text-accent-ink">{act.id}</span>
+                    <span className="eyebrow">{act.title}</span>
+                  </div>
+                  <ul className="mt-1.5 grid gap-1">
+                    {lensesIn(act.id).map((l) => (
+                      <li key={l.href}>
+                        <Link href={l.href} aria-current={l === lens ? "page" : undefined} className={cn("tap flex flex-col justify-center rounded-xl px-3 py-2", l === lens ? "bg-ink text-bg" : "hover:bg-surface-2")}>
+                          <span className="text-[15px] font-semibold">{l.label}</span>
+                          <span className={cn("text-[12px]", l === lens ? "opacity-75" : "text-muted")}>For {l.who}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
                 </li>
               ))}
-            </ul>
-            <div className="mt-3 flex flex-wrap gap-2">
+            </ol>
+            <div className="mt-4 flex flex-wrap gap-2">
               <button type="button" onClick={() => store.setUI({ motionPaused: !ui.motionPaused })} aria-pressed={ui.motionPaused} className="tap rounded-full border border-line-strong px-4 text-[14px] font-semibold">
                 {ui.motionPaused ? "Motion paused" : "Pause motion"}
               </button>
@@ -133,32 +144,26 @@ export function Shell({ children }: { children: ReactNode }) {
       </main>
       <footer data-mode={lens.mode === "dawn" ? "day" : lens.mode} className="relative overflow-hidden bg-bg">
         <div className="mx-auto max-w-[1240px] px-4 pb-8 pt-16 sm:px-6 lg:px-8">
-          <div className="grid gap-10 border-t border-line pt-10 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+          <div className="grid gap-10 border-t border-line pt-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1fr]">
             <div>
               <p className="max-w-[34ch] font-[family-name:var(--font-display)] text-[22px] font-black uppercase leading-[1.05] tracking-[-0.02em] text-ink">
                 Nine summers in. <span className="text-accent">The next hundred miles start here.</span>
               </p>
               <p className="mt-3 max-w-[42ch] text-[13.5px] leading-relaxed text-muted">The people and walks inside are samples, so every screen can be tried. The research numbers are real.</p>
             </div>
-            {[
-              { title: "Movers", links: ["/", "/member", "/circles", "/coach"] },
-              { title: "Growth", links: ["/partner", "/impact", "/future", "/vision"] },
-              { title: "Running it", links: ["/founder", "/xray", "/build"] },
-            ].map((col) => (
-              <div key={col.title}>
-                <div className="eyebrow">{col.title}</div>
+            {/* Acts 2–5; the first act is Home itself. */}
+            {ACTS.filter((act) => act.id !== 1).map((act) => (
+              <div key={act.id}>
+                <div className="eyebrow">{act.title}</div>
                 <ul className="mt-3 space-y-2">
-                  {col.links.map((href) => {
-                    const l = LENSES.find((x) => x.href === href)!;
-                    return (
-                      <li key={href}>
-                        <Link href={href} className="group inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-ink/85 hover:text-ink">
-                          {l.label}
-                          <span aria-hidden className="text-accent opacity-0 transition-opacity group-hover:opacity-100">→</span>
-                        </Link>
-                      </li>
-                    );
-                  })}
+                  {lensesIn(act.id).map((l) => (
+                    <li key={l.href}>
+                      <Link href={l.href} className="group inline-flex items-center gap-1.5 text-[14.5px] font-semibold text-ink/85 hover:text-ink">
+                        {l.label}
+                        <span aria-hidden className="text-accent opacity-0 transition-opacity group-hover:opacity-100">→</span>
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </div>
             ))}

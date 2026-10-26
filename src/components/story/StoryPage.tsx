@@ -18,6 +18,8 @@ import { Marquee } from "@/components/ui/Marquee";
 import { Inspectable } from "@/components/inspect/Inspect";
 import { LENSES } from "@/lib/lenses";
 import { store, useUI } from "@/lib/store";
+import { STEPS } from "@/components/present/Present";
+import { AppMap } from "./AppMap";
 import { ScenePoster } from "./ScenePoster";
 import { probeGpu } from "@/components/three/Stage";
 
@@ -203,7 +205,7 @@ export function StoryPage() {
                   See where it goes
                 </a>
                 <button type="button" onClick={() => store.setUI({ present: 0 })} className="tap rounded-xl border border-line-strong px-6 text-[15px] font-bold text-ink">
-                  Take the tour · 13 stops
+                  Take the tour · {STEPS.length} stops
                 </button>
               </>
             )}
@@ -240,6 +242,7 @@ export function StoryPage() {
       </section>
 
       <Marquee />
+      <AppMap />
       <Today />
       <Together />
       <WhyItWorks />
@@ -444,12 +447,26 @@ function WhereNext() {
 
 // ── TRY: every screen, one tap away ─────────────────────────────────────────
 
+/** Column spans (of 12) for the cards after the two leads: full rows of four or three, and a last row of two when five are left. */
+function restSpans(n: number): string[] {
+  const spans: string[] = [];
+  let left = n;
+  while (left > 0) {
+    const row = left === 5 ? 3 : left % 4 === 0 || left > 5 ? Math.min(4, left) : Math.min(3, left);
+    const span = row === 4 ? "lg:col-span-3" : row === 3 ? "lg:col-span-4" : row === 2 ? "lg:col-span-6" : "lg:col-span-12";
+    for (let k = 0; k < row; k++) spans.push(span);
+    left -= row;
+  }
+  return spans;
+}
+
 function TryEverything() {
-  const primary = LENSES.filter((l) => l.primary && l.href !== "/");
+  // The member app and the AI coach lead, two to a row; the rest fill rows of three or four, so no card is left alone.
+  const LEAD = ["/member", "/coach"];
+  const lead = LEAD.map((href) => LENSES.find((l) => l.href === href)!);
+  const primary = [...lead, ...LENSES.filter((l) => l.primary && l.href !== "/" && !LEAD.includes(l.href))];
   const more = LENSES.filter((l) => !l.primary);
-  // The first two screens lead, two to a row; the rest share one row (three or four across), so no card is left alone.
-  const rest = primary.length - 2;
-  const restSpan = rest % 4 === 0 ? "lg:col-span-3" : "lg:col-span-4";
+  const spans = restSpans(primary.length - lead.length);
   return (
     <section id="try-everything" aria-labelledby="try-title" data-mode="night" className="bg-bg py-20 text-ink sm:py-28">
       <div className="mx-auto max-w-[1240px] px-4 sm:px-6 lg:px-8">
@@ -463,13 +480,13 @@ function TryEverything() {
           <Reveal className="flex flex-col items-start gap-5">
             <p className="t-lede">A mover logs a walk, a City Lead sees who&apos;s coming, a sponsor&apos;s money pays for the next walk. It&apos;s all connected — open any screen and try it.</p>
             <Button variant="primary" onClick={() => store.setUI({ present: 0 })}>
-              Take the tour · 13 stops
+              Take the tour · {STEPS.length} stops
             </Button>
           </Reveal>
         </div>
         <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-12">
           {primary.map((l, i) => (
-            <Reveal as="li" key={l.href} delay={60 * i} className={i < 2 ? "lg:col-span-6" : restSpan}>
+            <Reveal as="li" key={l.href} delay={60 * i} className={i < lead.length ? "lg:col-span-6" : spans[i - lead.length]}>
               <Link href={l.href} className="group card flex h-full flex-col overflow-hidden">
                 <span className="relative block aspect-[16/8] overflow-hidden bg-surface-2 sm:aspect-[16/10]">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -573,7 +590,7 @@ function Closing() {
         </p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
           <Button variant="primary" onClick={() => store.setUI({ present: 0 })}>
-            Take the tour · 13 stops
+            Take the tour · {STEPS.length} stops
           </Button>
           <Link href="/vision" className="tap inline-flex items-center rounded-xl border border-line-strong px-6 text-[15px] font-bold hover:border-accent">
             See the big picture
