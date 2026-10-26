@@ -55,7 +55,8 @@ export function Shell({ children }: { children: ReactNode }) {
   }, []);
 
   // The presenter's second window shows only the notes.
-  if (pathname === "/notes") return <>{children}</>;
+  // The presenter's second window and the on-device 3D check show only themselves.
+  if (pathname === "/notes" || pathname === "/device-check") return <>{children}</>;
 
   return (
     <>

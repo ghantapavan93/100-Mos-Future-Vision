@@ -73,6 +73,21 @@ of SwiftShader:
 GL=gpu LAB_URL=https://100-mos-future-vision.vercel.app node scripts/check-load.mjs
 ```
 
+### On a real phone
+
+Open `/device-check` on the phone. It loads every screen in turn, full size,
+and measures time to the poster, time to live 3D, the quality tier, frame
+times and errors, then shows the results and posts them to
+`/api/device-report`. That route stores nothing: it logs one line per report
+(Vercel's runtime logs), and appends to `DEVICE_REPORT_FILE` when that is set.
+To test a local build from a phone on the same Wi-Fi:
+
+```bash
+npx next build
+DEVICE_REPORT_FILE=device-reports.ndjson npx next start -H 0.0.0.0 -p 3240
+# then open http://<this computer's LAN IP>:3240/device-check on the phone
+```
+
 ## Deploy
 
 Vercel, connected to this repo: every push to `main` deploys to production,

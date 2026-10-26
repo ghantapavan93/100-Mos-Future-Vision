@@ -11,7 +11,8 @@
 //  - Light post-processing: a vignette, a little grain, and bloom that catches
 //    only colours brighter than white — made with `glowColor()` on a material
 //    with `toneMapped={false}` — so a light page never washes out.
-//  - Counters in `window.__fl4scenes[name]` that scripts/check-scenes.mjs reads.
+//  - Counters in `window.__fl4scenes[name]` that scripts/check-scenes.mjs and
+//    the on-device check (/device-check) read, frame times included.
 //  - Cost follows the device: the Stage's tier sets the pixel ratio and the
 //    post-processing, and if frames still drop, the canvas steps down once more.
 //  - `onReady` fires once the first frame is on screen, so the Stage can swap
@@ -32,7 +33,14 @@ export interface SceneStats {
   mounts: number;
   calls: number;
   triangles: number;
+  /** The latest back-to-back frame intervals in ms (idle gaps left out), newest last, at most FRAME_LOG long. */
+  frameMs: number[];
+  /** True once frames ran slow and the canvas stepped down a tier. */
+  stepped: boolean;
 }
+
+/** How many recent frame intervals each scene keeps for diagnostics. */
+const FRAME_LOG = 240;
 
 declare global {
   interface Window {
@@ -42,7 +50,7 @@ declare global {
 
 export function sceneStats(name: string): SceneStats {
   window.__fl4scenes ??= {};
-  window.__fl4scenes[name] ??= { frames: 0, renderer: "", webgl2: false, mounted: false, mounts: 0, calls: 0, triangles: 0 };
+  window.__fl4scenes[name] ??= { frames: 0, renderer: "", webgl2: false, mounted: false, mounts: 0, calls: 0, triangles: 0, frameMs: [], stepped: false };
   return window.__fl4scenes[name];
 }
 
@@ -274,11 +282,16 @@ export interface SceneCanvasProps extends StageProps {
  * calls `onSlow` once if they run under ~40 fps. Gaps between on-demand frames
  * are idle time, not slowness, so any interval over 200 ms is ignored.
  */
-function FrameBudget({ onSlow }: { onSlow: () => void }) {
+function FrameBudget({ name, onSlow }: { name: string; onSlow: () => void }) {
   const intervals = useRef<number[]>([]);
   const done = useRef(false);
   useFrame((_, delta) => {
-    if (done.current || delta <= 0 || delta > 0.2) return;
+    if (delta <= 0 || delta > 0.2) return;
+    // Every back-to-back frame goes in the scene's log, before and after any step-down.
+    const log = sceneStats(name).frameMs;
+    log.push(Math.round(delta * 10000) / 10);
+    if (log.length > FRAME_LOG) log.splice(0, log.length - FRAME_LOG);
+    if (done.current) return;
     intervals.current.push(delta);
     if (intervals.current.length < 90) return;
     const sorted = [...intervals.current].sort((a, b) => a - b);
@@ -313,7 +326,13 @@ export function SceneCanvas({ name, active, still, probe, onFail, onReady, tier,
       camera={camera}
       style={{ position: "absolute", inset: 0 }}
     >
-      <FrameBudget onSlow={() => setStepped(true)} />
+      <FrameBudget
+        name={name}
+        onSlow={() => {
+          sceneStats(name).stepped = true;
+          setStepped(true);
+        }}
+      />
       <color attach="background" args={[background]} />
       <MotionProvider still={still} active={active}>
         {children}
