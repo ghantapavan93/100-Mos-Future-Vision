@@ -1,6 +1,6 @@
 "use client";
 
-// Presenter mode: "Maya's Saturday". A guided walk through every lens that is
+// Presenter mode: "One Saturday". A guided walk through every lens that is
 // advanced by hand (no timers). The audience sees the step and the controls;
 // the presenter's notes (what to say, click, expect, why, how, and what to be
 // honest about) stay folded or open in a second window. "Do it for me" sends
@@ -58,6 +58,14 @@ function perform(step: Step, via: string): number {
 
 const IMPACT_WALK = "Neighborhood Walk, the members' pick";
 
+/** Sunday's long walk in Detroit: the one the heat step calls off. */
+const HEAT_WALK = "det-dequindre-long";
+const HEAT_WALK_TITLE = "Sunday Long Walk";
+const HEAT_REASON = "Heat advisory — rest counts today";
+
+/** What the tour is called on screen. */
+export const TOUR_NAME = "One Saturday";
+
 /** The walk the neighborhood program pays for: Nina's own event, never one a partner already bought. */
 function impactWalk(w: World) {
   return Object.values(w.events).find((e) => e.chapterId === "detroit" && e.title === IMPACT_WALK && e.fundedBy === null && e.status !== "cancelled");
@@ -105,12 +113,12 @@ export const STEPS: Step[] = [
     route: "/coach",
     viewer: "maya",
     title: "A hard week.",
-    say: "Maya missed twelve days. The coach answers kindly, says who the advice comes from, and suggests one small step.",
+    say: "Maya missed twelve days. The AI coach answers kindly, says who the advice comes from, and suggests one small step.",
     click: "On the phone: tap a question, then “Who says?”.",
     happens: "A short, kind answer, a clear limit, and a step she can save — nothing happens without her tap.",
     why: "People need confidence and a next step, not a chatbot that diagnoses or prescribes.",
-    how: "classify → policy-filtered context → cards → validator → proposed step. No language model.",
-    honest: "The lessons are drafts written in her spirit — not her words. Free text stays off at launch until a sealed safety set passes.",
+    how: "The AI drafts inside Kayla-approved tips; rules check every word before Maya sees it; when the AI is off, approved tips answer alone. Pain and crisis questions get fixed, reviewed answers.",
+    honest: "The lessons are drafts written in her spirit — not her words — until she approves them. Free text stays off at launch until a sealed safety set passes.",
     focus: `[data-testid="phone"]`,
     act: (w) =>
       Object.values(w.coach.answers).some((a) => a.memberId === "maya" && a.intent === "restart")
@@ -152,6 +160,23 @@ export const STEPS: Step[] = [
       return out;
     },
     done: (w) => w.events["det-first-mile"]?.status === "completed",
+  },
+  {
+    route: "/circles",
+    viewer: "maya",
+    title: "Heat on Sunday.",
+    say: "A heat advisory lands for Sunday morning. Nina, the City Lead, calls off the long walk — and everyone who planned to come hears it right away.",
+    click: "On Nina's phone: open Sunday Long Walk, then call it off for heat.",
+    happens: "The walk shows as called off with the reason, everyone going is told, and every count and report drops it.",
+    why: "Real life happens. A safe call, made by a person and told to everyone at once, is what keeps people trusting the walks.",
+    how: "CANCEL_EVENT by the chapter's own organizer, with a reason; a walk that already happened can't be called off, and a sponsor-funded one is flagged as one fewer deliverable.",
+    honest: "The heat advisory here is a sample. A weather check could flag a walk for the City Lead, but the call stays a person's.",
+    focus: `article[aria-label="${HEAT_WALK_TITLE}"]`,
+    act: (w) => {
+      const e = w.events[HEAT_WALK];
+      return e && e.status !== "cancelled" && e.status !== "completed" ? [{ input: { type: "CANCEL_EVENT", payload: { eventId: HEAT_WALK, reason: HEAT_REASON } }, actor: nina }] : [];
+    },
+    done: (w) => w.events[HEAT_WALK]?.status === "cancelled",
   },
   {
     route: "/partner",
@@ -392,8 +417,12 @@ export function PresentOverlay() {
       {progress}
       <div className="px-5 pb-4 pt-4">
         <div className="flex items-center justify-between gap-3">
-          <span className="num text-[12.5px] font-bold text-accent-ink">
-            {present + 1} / {STEPS.length}
+          <span className="text-[12.5px] font-bold text-accent-ink">
+            <span className="uppercase tracking-[0.12em]">{TOUR_NAME}</span>
+            <span aria-hidden className="mx-1.5 opacity-50">·</span>
+            <span className="num">
+              {present + 1} / {STEPS.length}
+            </span>
           </span>
           <button type="button" onClick={() => store.setUI({ present: null })} className="tap -mr-2 rounded-full px-2.5 text-[13px] text-muted hover:text-ink">
             Close
@@ -476,7 +505,7 @@ export function PopOutNotes() {
   return (
     <div data-mode="day" className="min-h-screen bg-bg px-6 py-6 text-ink">
       <div className="eyebrow">
-        Presenter notes · step {stepIndex + 1} of {STEPS.length}
+        Presenter notes · {TOUR_NAME} · step {stepIndex + 1} of {STEPS.length}
       </div>
       <h1 className="t-section mt-1">{step.title}</h1>
       <div className="mt-4">

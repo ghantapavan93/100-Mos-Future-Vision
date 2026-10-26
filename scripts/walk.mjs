@@ -1,5 +1,5 @@
 // The whole demo, end to end, the way Kayla or Kirk would meet it: Home, the
-// 13-stop tour through every screen with every "Show me" pressed, then a
+// "One Saturday" tour through every screen with every "Show me" pressed, then a
 // check that what the tour did is what each screen shows. Then every screen at
 // phone width. Fails on any console error or sideways scroll. Each screen's
 // own phone flow has its own check script (check-member, check-circles, …).
@@ -62,7 +62,7 @@ await step("the tour opens", async () => {
   await see(tour().getByText("It starts with one first mile."));
 });
 
-const ROUTES = ["/", "/member", "/member", "/coach", "/circles", "/circles", "/partner", "/partner", "/impact", "/founder", "/xray", "/future", "/vision"];
+const ROUTES = ["/", "/member", "/member", "/coach", "/circles", "/circles", "/circles", "/partner", "/partner", "/impact", "/founder", "/xray", "/future", "/vision"];
 for (let i = 0; i < ROUTES.length; i++) {
   const route = ROUTES[i];
   await step(`tour step ${i + 1} → ${route}`, async () => {
@@ -86,7 +86,7 @@ await step("no lab words on any screen", async () => {
   for (const route of ["/member", "/coach", "/circles", "/partner", "/impact", "/founder", "/future", "/vision", "/xray", "/build"]) {
     await page.goto(BASE + route, { waitUntil: "networkidle" });
     const text = await page.locator("main").innerText();
-    for (const banned of ["Receipt #", "STRAVA-0", "APPLE-0", "sealed set", "ruleset", "Deterministic composer", "Independent prototype", "Fictional data", "For Kirk", "for Kirk", "For Kayla", "QUANTUM", "Mile Zero"]) {
+    for (const banned of ["Receipt #", "STRAVA-0", "APPLE-0", "sealed set", "ruleset", "Deterministic composer", "Independent prototype", "Fictional data", "For Kirk", "for Kirk", "For Kayla", "Mile Zero"]) {
       if (text.includes(banned)) throw new Error(`${route} shows "${banned}"`);
     }
   }

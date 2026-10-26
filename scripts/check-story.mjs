@@ -52,7 +52,7 @@ for (let b = 2; b <= 4; b++) {
   await page.waitForTimeout(b === 4 ? 5200 : 3800);
   await page.screenshot({ path: `${OUT}/story-beat${b}.png` });
 }
-await page.getByRole("button", { name: "Take the tour · 13 stops" }).first().waitFor();
+await page.getByRole("button", { name: /^Take the tour · \d+ stops$/ }).first().waitFor();
 // Client-side navigation (a full load would reset window and hide a leak).
 await page.getByRole("navigation", { name: "Lenses" }).getByRole("link", { name: "Member" }).click();
 await page.waitForURL("**/member");
