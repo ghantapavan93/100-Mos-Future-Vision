@@ -46,7 +46,7 @@ export function ProgramBuilder({ index = "03" }: { index?: string }) {
         </h2>
         <Reveal>
           <p className="t-lede">
-            Company teams are your Year 10 goal. The same setup can run a six-week program for an employer or a university, under its name. Set it once — the member page and the organizer view build themselves.
+            Company teams are your Year 10 goal. The same setup can run a six-week program for an employer or a university, under its name. They buy a program, not an ad: your City Leads deliver the walks, and they get proof it happened. Set it once — the member page and the organizer view build themselves.
           </p>
           <span className="mt-3 inline-flex rounded-full border border-line-strong px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-[0.1em] text-muted">Builds on what you have</span>
         </Reveal>
@@ -55,7 +55,7 @@ export function ProgramBuilder({ index = "03" }: { index?: string }) {
       <div className="mt-10 grid gap-5 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)_minmax(0,1fr)]">
         {/* The settings: the only thing anyone fills in. */}
         <Reveal className="card p-5 sm:p-6" as="div">
-          <div className="eyebrow">The settings</div>
+          <div className="eyebrow">The settings · a preview, nothing is sent</div>
           <div className="mt-4 space-y-5" data-testid="program-settings">
             <fieldset>
               <legend className="text-[13px] font-bold">Who runs it</legend>

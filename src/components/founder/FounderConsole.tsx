@@ -236,6 +236,12 @@ export function FounderConsole() {
             state: "next",
             origin: "new",
           },
+          {
+            title: "A Circle Never Goes Dark",
+            line: "When a City Lead needs a break, a co-lead you've said yes to takes the walks. Members see the same circle at the same time — just a new friendly face.",
+            state: "next",
+            origin: "new",
+          },
         ]}
       />
 

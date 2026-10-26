@@ -192,6 +192,7 @@ export function MemberLens() {
       show: () => open("you", "mile-moments"),
     },
     { title: "My Summer Story", line: "You already share a recap of the season. On September 1, each member gets their own: miles, meetups and their favorite day.", state: "next", origin: "yours" },
+    { title: "Come Back in May", line: "In April, a private nudge from your own summer story — your miles, your favorite walk — invites you back for the next season, and to bring one friend.", state: "next", origin: "new" },
     { title: "Share My Walk", line: "Tell up to three people you're heading out, then tap “I'm home.” No map is shared.", state: "next", origin: "new" },
     { title: "Your Movement Passport", line: "Your badges already mark the big moments. Later, a passport keeps every walk you joined and every one you helped lead — yours to keep, shared only if you choose.", state: "next", origin: "yours" },
   ];

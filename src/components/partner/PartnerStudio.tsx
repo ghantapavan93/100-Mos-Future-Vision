@@ -258,6 +258,12 @@ export function PartnerStudio() {
             origin: "yours",
           },
           {
+            title: "Proof of Delivery",
+            line: "Every promise in a deal — walks held, first-timers welcomed, money given back — links to the walk that delivered it. Brands renew on proof, not a slide.",
+            state: "next",
+            origin: "new",
+          },
+          {
             title: "City Relay title partner",
             line: "Year 10's relay passes a baton Chicago → Detroit → Durham → Charleston → New York → Montreal → Los Angeles. One partner's name rides with it, and every city adds a moment.",
             state: "next",

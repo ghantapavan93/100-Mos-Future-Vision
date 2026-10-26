@@ -55,6 +55,9 @@ function Doorway({ coming }: { coming: number }) {
       >
         {going ? `You're in ✓ · ${coming} coming · reminder Friday` : "I'm coming"}
       </button>
+      <Link href="/circles" className="mt-1.5 block text-[11.5px] font-semibold text-muted underline-offset-4 hover:underline">
+        A picture of it — the real sign-up runs on City Circles →
+      </Link>
     </div>
   );
 }

@@ -80,6 +80,7 @@ export const ROADMAP: RoadmapItem[] = [
   { id: "garmin-tuneup", column: "fixes", group: "Tidy-ups first", title: "Finish the Garmin tune-up", line: "The Garmin connection is nearly there. One small last step.", size: "S" },
   { id: "events-upcoming", column: "fixes", group: "Tidy-ups first", title: "Events tab leads with what's coming", line: "Upcoming walks first, then the ones you've already had.", size: "S", tryHref: "/circles" },
   { id: "android", column: "fixes", group: "Tidy-ups first", title: "The Android release", line: "The Health Connect work is already in. One check on a real Android phone, then the public listing.", size: "S" },
+  { id: "strava-2027", column: "fixes", group: "Tidy-ups first", title: "Ready for Strava's 2027 update", line: "Strava changes how apps connect on June 1, 2027. One small update keeps members' Strava panel working.", size: "S" },
   { id: "together-total", column: "fixes", group: "Tidy-ups first", title: "A together total", line: "Show the season's shared total beside the leaderboard, so every mile feels part of one goal.", size: "S", tryHref: "/circles", featureId: "chapter-total", needsKayla: "Kayla decides: the leaderboard, a together total, or both." },
   { id: "all-cities", column: "fixes", group: "On the website", title: "All 7 cities on the website", line: "The City Leads page shows 4 of the 7 cities from Year 9.", size: "S" },
   { id: "typo", column: "fixes", group: "On the website", title: "One small typo", line: "The home page headline says “GET'S”. It should be “GETS”.", size: "S" },

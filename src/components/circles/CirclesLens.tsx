@@ -307,6 +307,12 @@ export function CirclesLens() {
       origin: "yours",
     },
     {
+      title: "Ready-to-Walk Check",
+      line: "Before a walk goes live: a back walker, the route's access notes, a heat-and-air check, and the message ready if it's called off. Anything missing waits for the Lead's OK.",
+      state: "next",
+      origin: "new",
+    },
+    {
       title: "Stories of Your City",
       line: "A walk that tells the city's story — the riverfront in Detroit, the lakefront in Chicago — with stops a City Lead reviews.",
       state: "next",
