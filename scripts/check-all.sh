@@ -8,7 +8,7 @@
 cd "$(dirname "$0")/.." || exit 1
 mkdir -p shots/checks
 fails=0
-for s in check-story check-scenes check-member check-coach check-circles check-impact check-commerce check-founder check-future check-roadmap check-behind check-vision walk; do
+for s in check-story check-scenes check-member check-coach check-circles check-impact check-commerce check-founder check-future check-roadmap check-behind check-vision check-guidance walk; do
   if node "scripts/$s.mjs" > "shots/checks/$s.log" 2>&1; then
     echo "PASS $s ($(grep -cE '^\s*ok' "shots/checks/$s.log") ok)"
   else

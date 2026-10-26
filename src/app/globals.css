@@ -504,6 +504,46 @@
   animation: none;
 }
 
+/* "Step 2 · Tap here": glides after its target, and nods toward it. */
+.tap-hint {
+  transition: transform 160ms var(--ease-enter);
+}
+.tap-hint-bob {
+  animation: tap-hint-down 1.4s var(--ease-enter) infinite;
+}
+.tap-hint[data-below="true"] .tap-hint-bob {
+  animation-name: tap-hint-up;
+}
+@keyframes tap-hint-down {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+@keyframes tap-hint-up {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tap-hint {
+    transition: none;
+  }
+  .tap-hint-bob {
+    animation: none;
+  }
+}
+[data-motion="paused"] .tap-hint-bob {
+  animation: none;
+}
+
 /* The main button: a slight bevel, and one shine across it on hover. */
 .btn-primary {
   position: relative;

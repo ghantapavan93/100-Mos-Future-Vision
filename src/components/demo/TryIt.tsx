@@ -17,6 +17,7 @@ export function hotWord(token: string): ReactNode {
 }
 import { store, useLedger, useWorld } from "@/lib/store";
 import { OUTCOME_TONE, OUTCOME_WORDS, plain } from "./plain";
+import { TapHint } from "./TapHint";
 
 export interface Step {
   id: string;
@@ -87,25 +88,33 @@ function Steps({ steps, world, marked, finale }: { steps: Step[]; world: World; 
           return (
             <li
               key={s.id}
+              data-next={isNext ? "true" : undefined}
               className={cn(
                 "flex gap-3 rounded-2xl border p-3.5 transition-colors duration-300",
-                !isDone && !isNext && "hidden lg:flex",
+                // Narrow screens: the next step rides above the phone instead (NextBar), so it isn't said twice.
+                !isDone && "hidden lg:flex",
                 isDone ? "border-ok/40 bg-ok-soft/60" : isNext ? "border-accent/70 bg-accent/10 shadow-[var(--glow)]" : "border-line bg-surface",
               )}
             >
               <Check on={isDone} />
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className={cn("text-[15.5px] font-bold leading-snug", isDone && "text-muted line-through decoration-ok/60")}>{s.label}</div>
                 {!isDone && s.hint ? <div className="mt-0.5 text-[13.5px] text-muted">{s.hint}</div> : null}
                 {isDone ? <div className={cn("mt-1 text-[14px] leading-snug text-ink", i !== lastDone && "hidden lg:block")}>{s.why}</div> : null}
               </div>
+              {/* Beside the phone on wide screens: this card says where to look. */}
+              {isNext ? (
+                <span aria-hidden className="hidden shrink-0 items-center gap-1 self-center rounded-full bg-accent px-2.5 py-1 text-[11px] font-black uppercase tracking-[0.08em] text-[#140b05] lg:inline-flex">
+                  On the phone <span className="text-[13px] leading-none">→</span>
+                </span>
+              ) : null}
             </li>
           );
         })}
       </ol>
-      {later ? (
+      {next >= 0 ? (
         <p className="mt-3 text-[13.5px] text-muted lg:hidden">
-          Then {later} more step{later === 1 ? "" : "s"}.
+          {later + 1} to go. <span className="font-semibold text-accent-ink">The next one is just below ↓</span>
         </p>
       ) : null}
       {count === steps.length && finale ? <div className="rise-in mt-5 rounded-2xl border border-accent/50 bg-accent/10 p-4 text-[15px] leading-relaxed">{finale}</div> : null}
@@ -119,7 +128,14 @@ function Happened({ since, example }: { since: number; example: string }) {
   const recent: Receipt[] = ledger.filter((r) => r.seq > since).slice(-4).reverse();
   return (
     <div>
-      <div className="eyebrow">What just happened</div>
+      <div className="eyebrow flex items-center gap-1.5">
+        {/* The phone is to the left on wide screens and above on narrow ones. */}
+        <span aria-hidden className="text-[13px] leading-none text-accent-ink">
+          <span className="hidden lg:inline">←</span>
+          <span className="lg:hidden">↑</span>
+        </span>
+        What just happened on the phone
+      </div>
       {recent.length ? (
         <ul className="mt-3 space-y-2.5" aria-live="polite">
           {recent.map((r) => (
@@ -150,6 +166,32 @@ function Happened({ since, example }: { since: number; example: string }) {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+/**
+ * Narrow screens stack the steps above the phone, so the next one rides along
+ * just above it: what to tap, and that it's the glowing thing below.
+ */
+function NextBar({ step, n, total }: { step: Step; n: number; total: number }) {
+  return (
+    <div className="sticky top-[64px] z-30 mb-3 lg:hidden" data-testid="next-bar">
+      <div className="flex items-start gap-3 rounded-2xl border border-accent/60 bg-[color-mix(in_srgb,var(--bg)_90%,var(--accent))] p-3 shadow-[var(--glow)]">
+        <span aria-hidden className="num flex size-7 shrink-0 items-center justify-center rounded-full bg-accent text-[13px] font-black text-[#140b05]">
+          {n}
+        </span>
+        <div className="min-w-0">
+          <div className="text-[11.5px] font-black uppercase tracking-[0.1em] text-accent-ink">
+            Step {n} of {total}
+          </div>
+          <div className="mt-0.5 text-[15px] font-bold leading-snug">{step.label}</div>
+          <div className="mt-0.5 text-[13px] leading-snug text-muted">
+            {step.hint ? `${step.hint} ` : ""}
+            <span className="whitespace-nowrap font-semibold text-accent-ink">It&apos;s glowing below ↓</span>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -205,7 +247,9 @@ export function TryIt({
 
   // The guiding ring: whatever on the phone carries data-step-target="<next step's id>" gets it.
   const phoneBox = useRef<HTMLDivElement>(null);
-  const nextId = steps.find((s) => !s.done(world, marked))?.id ?? null;
+  const nextIndex = steps.findIndex((s) => !s.done(world, marked));
+  const nextStep = nextIndex < 0 ? null : steps[nextIndex]!;
+  const nextId = nextStep?.id ?? null;
   useEffect(() => {
     const box = phoneBox.current;
     if (!box) return;
@@ -232,8 +276,12 @@ export function TryIt({
           <div className="order-1 lg:sticky lg:top-24">
             <Steps steps={steps} world={world} marked={marked} finale={finale} />
           </div>
-          <div ref={phoneBox} className="order-2">
-            {phone}
+          <div className="order-2">
+            {nextStep ? <NextBar step={nextStep} n={nextIndex + 1} total={steps.length} /> : null}
+            <div ref={phoneBox} className="relative">
+              {phone}
+              <TapHint box={phoneBox} targetId={nextId} step={nextIndex + 1} />
+            </div>
           </div>
           <div className="order-3 space-y-6 lg:sticky lg:top-24">
             {feed ? <Happened since={since ?? Number.MAX_SAFE_INTEGER} example={example} /> : null}
