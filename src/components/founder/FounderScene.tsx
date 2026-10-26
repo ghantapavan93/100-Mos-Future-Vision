@@ -246,7 +246,8 @@ function MoneyColumn({ kind, value, tallest, x, z, labelDx = 0 }: { kind: "paid"
       ) : null}
       {kind === "signed" && target > 0.02 ? <Coins height={target} /> : null}
       {/* On a phone the names sit at the columns' feet, one row in front of the map, so none lands on a city. */}
-      <Label text={title} detail={usd(value)} position={portrait ? [0, 0.05, 0.95] : [labelDx, Math.max(target, 0) + 0.55, 0]} px={portrait ? 21 : 25} background="rgba(30,28,22,0.9)" color={kind === "promised" ? "#c9c2ea" : "#f6d899"} />
+      {/* A founder's week never opens on "$0": nothing yet reads as not started, not as failing. */}
+      <Label text={title} detail={value > 0 ? usd(value) : "none yet"} position={portrait ? [0, 0.05, 0.95] : [labelDx, Math.max(target, 0) + 0.55, 0]} px={portrait ? 21 : 25} background="rgba(30,28,22,0.9)" color={kind === "promised" ? "#c9c2ea" : "#f6d899"} />
     </group>
   );
 }

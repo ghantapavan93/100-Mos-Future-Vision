@@ -123,7 +123,7 @@ export function FounderConsole() {
           { label: "In city circles", value: view.members.toLocaleString("en-US"), color: "#8a7a62" },
           { label: "Walks on the calendar", value: scene.towers.reduce((s, t) => s + t.events, 0), color: "#ffc46b" },
           { label: "Cities that need a hand", value: stretched, color: LIGHT.night.gold, hollow: true },
-          { label: "Sponsor money in", value: usd(scene.money.paid), color: "#ffc14d" },
+          { label: "Sponsor money in", value: scene.money.paid > 0 ? usd(scene.money.paid) : "None yet", color: "#ffc14d" },
         ]}
         stage={
           <Stage
