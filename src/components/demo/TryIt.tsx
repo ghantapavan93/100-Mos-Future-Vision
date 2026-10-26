@@ -171,13 +171,16 @@ function Happened({ since, example }: { since: number; example: string }) {
 }
 
 /**
- * Narrow screens stack the steps above the phone, so the next one rides along
- * just above it: what to tap, and that it's the glowing thing below.
+ * Narrow screens stack the steps above the phone, so the next one sits just
+ * above it: what to tap, and that it's the glowing thing below. It stays put
+ * rather than riding along: a sticky bar slid over the phone as you scrolled
+ * and covered the very control it named. On the phone, the "Tap here" callout
+ * does the pointing.
  */
 function NextBar({ step, n, total }: { step: Step; n: number; total: number }) {
   return (
-    <div className="sticky top-[64px] z-30 mb-3 lg:hidden" data-testid="next-bar">
-      <div className="flex items-start gap-3 rounded-2xl border border-accent/60 bg-[color-mix(in_srgb,var(--bg)_90%,var(--accent))] p-3 shadow-[var(--glow)]">
+    <div className="mb-3 lg:hidden" data-testid="next-bar">
+      <div className="flex items-start gap-2.5 rounded-2xl border border-accent/60 bg-[color-mix(in_srgb,var(--bg)_90%,var(--accent))] px-3 py-2.5 shadow-[var(--glow)]">
         <span aria-hidden className="num flex size-7 shrink-0 items-center justify-center rounded-full bg-accent text-[13px] font-black text-[#140b05]">
           {n}
         </span>

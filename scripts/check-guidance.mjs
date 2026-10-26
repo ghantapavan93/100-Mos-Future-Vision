@@ -105,6 +105,26 @@ for (const [w, h] of [
       const after = await phoneTop();
       if (Math.abs(after - before) > 2) console.log(`  --  ${where}: the phone moved ${Math.round(after - before)} px on screen after the tap`);
     }
+    if (mobile) {
+      // Scroll through the whole Try-it, a thumb's flick at a time: the step bar must never cover the control it names.
+      const covered = await page.evaluate(async () => {
+        const sleep = (ms) => new Promise((s) => setTimeout(s, ms));
+        const box = document.querySelector("#try");
+        if (!box) return 0;
+        const top = box.getBoundingClientRect().top + scrollY - 100;
+        let hits = 0;
+        for (let y = top; y < top + box.getBoundingClientRect().height; y += 80) {
+          scrollTo(0, y);
+          await sleep(50);
+          const bar = document.querySelector('[data-testid="next-bar"]')?.getBoundingClientRect();
+          const ring = document.querySelector('[data-testid="phone"] .step-ring')?.getBoundingClientRect();
+          if (bar && ring && bar.left < ring.right && ring.left < bar.right && bar.top < ring.bottom && ring.top < bar.bottom) hits++;
+        }
+        return hits;
+      });
+      if (covered) fail(`${tag}: the step bar covers the ringed control at ${covered} scroll positions`);
+      else ok(`${tag}: the step bar never covers the control while scrolling`);
+    }
     if (errors.length) fail(`${tag}: page error ${errors[0]}`);
     await page.close();
   }
