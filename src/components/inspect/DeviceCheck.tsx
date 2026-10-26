@@ -112,8 +112,10 @@ async function measure(frame: HTMLIFrameElement, screen: (typeof SCREENS)[number
     const win = frame.contentWindow;
     if (!win || win === hooked || win.location.href === "about:blank" || win.document.readyState === "loading") return;
     hooked = win;
-    win.addEventListener("error", (e) => r.errors.push(String(e.message).slice(0, 200)));
-    win.addEventListener("unhandledrejection", (e) => r.errors.push(String((e as PromiseRejectionEvent).reason).slice(0, 200)));
+    // The first few errors say what broke; a flood of repeats would only bloat the report.
+    const note = (message: string) => r.errors.length < 10 && r.errors.push(message.slice(0, 200));
+    win.addEventListener("error", (e) => note(String(e.message)));
+    win.addEventListener("unhandledrejection", (e) => note(String((e as PromiseRejectionEvent).reason)));
     const tick = (now: number) => {
       if (lastTick) r.longestGapMs = Math.max(r.longestGapMs, Math.round(now - lastTick));
       lastTick = now;
@@ -186,6 +188,8 @@ export function DeviceCheck() {
     started.current = true;
     const info = deviceInfo();
     setDevice(info);
+    // A first, tiny report: even a run that never finishes shows it reached the server.
+    void fetch("/api/device-report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ stage: "started", device: info, results: [] }) }).catch(() => {});
     const out: ScreenResult[] = [];
     for (let i = 0; i < SCREENS.length; i++) {
       setCurrent(i);
@@ -198,7 +202,7 @@ export function DeviceCheck() {
     setCurrent(null);
     setSent("sending");
     try {
-      const res = await fetch("/api/device-report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ device: info, results: out }) });
+      const res = await fetch("/api/device-report", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ stage: "done", device: info, results: out }) });
       setSent(res.ok ? "sent" : "failed");
     } catch {
       setSent("failed");
@@ -274,7 +278,20 @@ export function DeviceCheck() {
               type="button"
               className="mt-5 min-h-12 w-full rounded-full border border-line-strong text-[15px] font-bold"
               onClick={() => {
-                void navigator.clipboard?.writeText(report).then(() => setCopied(true));
+                // Phones block the clipboard API on plain-http addresses (a LAN test server), so fall back to a selected textarea.
+                const fallback = () => {
+                  const area = document.createElement("textarea");
+                  area.value = report;
+                  area.setAttribute("readonly", "");
+                  area.style.position = "fixed";
+                  area.style.opacity = "0";
+                  document.body.appendChild(area);
+                  area.select();
+                  setCopied(document.execCommand("copy"));
+                  area.remove();
+                };
+                if (navigator.clipboard && window.isSecureContext) void navigator.clipboard.writeText(report).then(() => setCopied(true), fallback);
+                else fallback();
               }}
             >
               {copied ? "Copied ✓" : "Copy results"}
