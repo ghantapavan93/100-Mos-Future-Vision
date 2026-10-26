@@ -798,7 +798,7 @@ const handlers: { [T in CommandType]: Handler<T> } = {
     owns: (w, a, p) => self(w, a, p.memberId),
     run(ctx, p) {
       const id = nextId(ctx.w, "q");
-      const a = answer(ctx.w, p.memberId, p.question, ctx.w.coach.activeRuleset, ctx.w.coach.drift, id);
+      const a = answer(ctx.w, p.memberId, p.question, ctx.w.coach.activeRuleset, ctx.w.coach.drift, id, p.ai);
       ctx.w.coach.answers[id] = a;
       ctx.w.coach.sessions.push({ id, memberId: p.memberId, question: p.question, at: ctx.at, ruleset: a.ruleset, answerId: id });
       ctx.fact("intent", a.intent);
@@ -807,7 +807,8 @@ const handlers: { [T in CommandType]: Handler<T> } = {
       ctx.note("reconcile", "info", `Intent ${a.intent}, safety ${a.safety}, ruleset ${a.ruleset}.`);
       for (const ex of a.context.excluded) ctx.note("policy", "pass", `${ex.records} ${ex.source} record${ex.records === 1 ? "" : "s"} kept out of the coach's context.`, ex.ruleId);
       if (a.rejectedDraft) ctx.note("policy", "fail", `Validator rejected the draft (${a.rejectedDraft.failed.join(", ")}); safe fallback sent instead.`);
-      return ok(a.rejectedDraft ? "QUANTUM caught an unsafe draft and sent a safe answer." : `QUANTUM answered (${a.intent}).`);
+      if (a.generator === "ai-model") ctx.note("policy", "pass", `AI draft (${a.model}) passed every check; facts are approved tips.`);
+      return ok(a.rejectedDraft ? "QUANTUM caught an unsafe draft and sent a safe answer." : a.generator === "ai-model" ? `QUANTUM answered with AI (${a.intent}).` : `QUANTUM answered (${a.intent}).`);
     },
   },
   SAVE_NEXT_STEP: {
@@ -1243,6 +1244,8 @@ const handlers: { [T in CommandType]: Handler<T> } = {
       if (cand.approvals.length < 2) return ok(`${p.as} approval recorded for ${cand.version}. Waiting on the other.`);
       const gate = releaseGate(ctx.w.coach.activeRuleset, cand.version);
       ctx.note("policy", gate.pass ? "pass" : "fail", gate.reason, "RULESET-GATE");
+      // Reported every time, never folded into the line above: "no regressions" must not read as "safe".
+      ctx.note("policy", gate.safety.pass ? "pass" : "info", gate.safety.reason, "SAFETY-GATE");
       if (!gate.pass) {
         ctx.w.coach.candidate = null;
         return block(`Release gate refused ${cand.version}: ${gate.reason}`, "RULESET-GATE");
@@ -1473,7 +1476,11 @@ function redactPayload(type: CommandType, payload: unknown): unknown {
     };
   }
   if (type === "LOG_ACTIVITY" && p.prefilledFrom === "strava") return { ...p, distanceMi: "[not shown]", startedAt: "[not shown]", durationMin: "[not shown]" };
-  if (type === "ASK_COACH" && typeof p.question === "string") return { ...p, question: `[member's words · ${questionDigest(p.question)}]` };
+  if (type === "ASK_COACH" && typeof p.question === "string") {
+    // The AI's lines can echo the member's words, so they stay out of the audit trail too.
+    const ai = p.ai as { heard: string[]; cards: string[]; model: string } | undefined;
+    return { ...p, question: `[member's words · ${questionDigest(p.question)}]`, ...(ai ? { ai: { ...ai, heard: ai.heard.map(() => "[coach's words]") } } : {}) };
+  }
   return payload;
 }
 

@@ -55,7 +55,14 @@ export const schemas = {
   CANCEL_RSVP: z.object({ memberId: id, eventId: id }),
   INVITE_FRIEND: z.object({ memberId: id }),
   TOGGLE_STORY_CARD: z.object({ memberId: id }),
-  ASK_COACH: z.object({ memberId: id, question: z.string().trim().min(1).max(400) }),
+  ASK_COACH: z.object({
+    memberId: id,
+    question: z.string().trim().min(1).max(400),
+    /** The AI's proposal, when the AI is on: kind lines in its own words and approved tips by id. The rules decide whether it is sent. */
+    ai: z
+      .object({ heard: z.array(z.string().trim().min(1).max(240)).min(1).max(3), cards: z.array(id).min(1).max(3), model: z.string().min(1).max(40) })
+      .optional(),
+  }),
   SAVE_NEXT_STEP: z.object({ memberId: id, answerId: id }),
   CLEAR_NEXT_STEP: z.object({ memberId: id }),
   /** The member's right to erase what they told the coach (WA-04). */

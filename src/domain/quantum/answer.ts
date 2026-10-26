@@ -2,19 +2,42 @@
 //   question → classify (intent, safety, confidence) → assemble context (policy-filtered)
 //   → retrieve cards (ruleset) → draft → validate → (fallback if a check fails)
 //   → proposed next step (never executed here).
-// Pure: the same world, question and ruleset always give the same answer.
+// Pure: the same world, question, ruleset and AI draft always give the same answer.
 //
 // One invariant is enforced here rather than per intent: a question the rules
 // don't recognise, or recognise while the words carry a concern they can't
 // place, never gets a fitness step. It gets the safe default.
+//
+// The AI (when it is switched on) drafts before this runs, outside the engine.
+// Its draft is only a proposal: kind lines in its own words, plus approved tips
+// chosen by id. The rules decide the topic, keep every boundary, help line and
+// next step, and send the draft only if every check passes.
 
 import { dayLabel, timeLabel } from "../calendar";
 import { decide } from "../policy";
 import { activitiesOf } from "../projections";
 import type { ActivitySource, Member, RulesetVersion, World } from "../types";
-import { classify, normalise } from "./classify";
+import { classify, normalise, type Classification } from "./classify";
 import { CARD, cardsFor } from "./knowledge";
-import type { AnswerBlock, Check, CoachAnswer, CoachContext, Intent, NextStep, Safety } from "./types";
+import type { AiDraft, AnswerBlock, Check, CoachAnswer, CoachContext, Generator, Intent, KnowledgeCard, NextStep, Safety } from "./types";
+
+/**
+ * The topics the AI may write for: everyday movement questions. Pain, health
+ * conditions, crisis, wellbeing, food, someone else's data, Kayla's voice,
+ * rule-bending and anything not understood are answered by the approved tips
+ * alone, every time — the model is never asked.
+ */
+export const AI_TOPICS: readonly Intent[] = ["start", "restart", "first-5k", "race-big", "community", "rest", "heat"];
+
+/** True when the AI may draft this answer: an everyday topic, understood with confidence, with no safety concern. */
+export function aiMayWrite(c: Pick<Classification, "intent" | "safety" | "confidence">): boolean {
+  return c.confidence === "high" && c.safety === "ok" && AI_TOPICS.includes(c.intent);
+}
+
+/** The tips the AI may choose from: the ruleset's tips, minus help lines (those are never the AI's to choose). */
+export function aiCardPool(ruleset: RulesetVersion): KnowledgeCard[] {
+  return cardsFor(ruleset).filter((c) => c.status !== "resource");
+}
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
 
@@ -378,6 +401,56 @@ export function validate(question: string, intent: Intent, safety: Safety, draft
   return checks;
 }
 
+// ── The AI's draft ──────────────────────────────────────────────────────────
+
+const CONTACT = /https?:\/\/|www\.|\S+@\S+\.\w|\b\d{3}[-. )]\s?\d{3}[-. ]\d{4}\b/;
+/** Health or science claims are the tips' job, never the AI's own words. */
+const CLAIM = /\b(?:stud(?:y|ies)|research|scien\w*|proven|percent|calories?|burns?|burning|blood pressure|heart rate|cholesterol|weight loss|lose weight|metabolism|immune|cures?|prevents?|lowers? your|reduces? your|doctors? (?:say|recommend))\b|%/;
+
+/**
+ * The AI's answer, assembled: its kind lines first, then the tips it chose in
+ * their own words, then every boundary and help line the rules wrote for this
+ * topic. The next step is always the rules' own.
+ */
+function draftFromAi(ai: AiDraft, base: Draft): Draft {
+  return {
+    blocks: [
+      ...ai.heard.map((text): AnswerBlock => ({ kind: "heard", text: text.trim() })),
+      ...ai.cards.map((cardId): AnswerBlock => ({ kind: "know", text: CARD[cardId]?.body ?? "", cardId })),
+      ...base.blocks.filter((b) => b.kind === "boundary" || b.kind === "support"),
+    ],
+    nextStep: base.nextStep,
+  };
+}
+
+/** Checks only an AI draft needs, on top of every check an answer gets. */
+export function aiChecks(ai: AiDraft, pool: ReadonlySet<string>, question: string, summary: string | null): Check[] {
+  const lines = ai.heard.map((h) => h.trim()).filter(Boolean);
+  const unknown = ai.cards.filter((id) => !pool.has(id));
+  const repeated = ai.cards.length !== new Set(ai.cards).size;
+  // Numbers the member said, or that their own shared summary holds, are fine to echo; any other number is a new claim.
+  const known = `${question} ${summary ?? ""}`;
+  const newNumber = lines.some((l) => (l.match(/\d+(?:\.\d+)?/g) ?? []).some((n) => !known.includes(n)));
+  const claim = lines.some((l) => CLAIM.test(normalise(l)));
+  return [
+    {
+      id: "ai-own-words",
+      pass: lines.length >= 1 && lines.length <= 3 && lines.every((l) => l.length <= 240) && !lines.some((l) => CONTACT.test(l)),
+      detail: "The AI's own words: one to three short lines, no links, emails or phone numbers.",
+    },
+    {
+      id: "ai-no-new-facts",
+      pass: !newNumber && !claim,
+      detail: newNumber ? "The AI used a number the member never shared." : claim ? "The AI made a health claim of its own; facts come only from tips." : "No health claims or new numbers in the AI's own words.",
+    },
+    {
+      id: "ai-tips-only",
+      pass: ai.cards.length >= 1 && ai.cards.length <= 3 && unknown.length === 0 && !repeated,
+      detail: unknown.length ? `The AI chose a tip that isn't approved for it (${unknown.join(", ")}).` : "Every fact comes from approved tips the AI chose by name.",
+    },
+  ];
+}
+
 function fallback(intent: Intent, safety: Safety): Draft {
   if (safety === "urgent" || intent === "crisis") {
     return {
@@ -402,7 +475,7 @@ function otherNamesFor(world: World, memberId: string): string[] {
     .map((m) => m.name);
 }
 
-export function answer(world: World, memberId: string, question: string, ruleset: RulesetVersion, drift: boolean, id: string): CoachAnswer {
+export function answer(world: World, memberId: string, question: string, ruleset: RulesetVersion, drift: boolean, id: string, ai?: AiDraft): CoachAnswer {
   const member = world.members[memberId];
   if (!member) throw new Error(`Unknown member ${memberId}`);
   const c = classify(question, ruleset);
@@ -414,14 +487,34 @@ export function answer(world: World, memberId: string, question: string, ruleset
   const others = otherNamesFor(world, memberId);
 
   let draft = intent === "general" ? safeDefault(c.confidence === "low") : draftFor(intent, c.matched, world, member, ctx, ruleset, available);
+  let rejectedDraft: CoachAnswer["rejectedDraft"] = null;
+  let generator: Generator = "deterministic-composer";
+  const scope: Check[] = [];
+
+  // The AI's draft replaces the composer's only for an everyday topic, and only if every check passes.
+  if (ai && !aiMayWrite(c)) {
+    scope.push({ id: "ai-scope", pass: true, detail: "Approved tips answered alone: the AI never writes about this kind of question." });
+  } else if (ai) {
+    const pool = new Set(aiCardPool(ruleset).map((card) => card.id));
+    const proposed = draftFromAi(ai, draft);
+    const failedAi = [...validate(question, intent, safety, proposed, ctx, available, others), ...aiChecks(ai, pool, question, ctx.summary)].filter((ch) => !ch.pass);
+    if (failedAi.length === 0) {
+      draft = proposed;
+      generator = "ai-model";
+      scope.push(...aiChecks(ai, pool, question, ctx.summary));
+    } else {
+      rejectedDraft = { text: proposed.blocks.map((b) => b.text).join(" "), failed: failedAi.map((ch) => ch.id) };
+      scope.push({ id: "ai-scope", pass: true, detail: "The AI's draft failed a check, so the approved tips answered alone." });
+    }
+  }
   if (drift) draft = { ...draft, blocks: [...draft.blocks, { kind: "heard", text: driftLine(intent, others[0] ?? "Another member") }] };
 
-  let checks = validate(question, intent, safety, draft, ctx, available, others);
-  let rejectedDraft: CoachAnswer["rejectedDraft"] = null;
+  let checks = [...validate(question, intent, safety, draft, ctx, available, others), ...scope];
   const failed = checks.filter((ch) => !ch.pass);
   if (failed.length > 0) {
     rejectedDraft = { text: draft.blocks.map((b) => b.text).join(" "), failed: failed.map((ch) => ch.id) };
     draft = fallback(intent, safety);
+    generator = "deterministic-composer";
     checks = validate(question, intent, safety, draft, ctx, available, others);
   }
 
@@ -443,7 +536,8 @@ export function answer(world: World, memberId: string, question: string, ruleset
     nextStep: draft.nextStep,
     checks,
     rejectedDraft,
-    generator: "deterministic-composer",
+    generator,
+    model: generator === "ai-model" ? (ai?.model ?? null) : null,
     attributions: garmin ? [member.connections.garmin.deviceModel ?? "Garmin"] : [],
   };
 }

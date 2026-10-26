@@ -72,6 +72,7 @@ export function plain(text: string): string {
     })
     .replace(/A member list would be an unauthorised disclosure\./g, "A list of members is never shared.")
     .replace(/(What's left after giving|Contribution after impact) ([−-]?\$[\d,.]+) → /g, "What's left after giving: $2 → ")
+    .replace(/QUANTUM answered with AI \(([\w-]+)\)\.?/g, (m, topic: string) => (TOPIC_WORDS[topic] ? `The AI coach answered a question about ${TOPIC_WORDS[topic]}, inside approved tips.` : "The AI coach answered, inside approved tips."))
     .replace(/QUANTUM answered \(([\w-]+)\)\.?/g, (m, topic: string) => (TOPIC_WORDS[topic] ? `The coach answered a question about ${TOPIC_WORDS[topic]}.` : "The coach answered."))
     .replace(/QUANTUM caught an unsafe draft and sent a safe answer\./g, "The coach caught an unsafe answer and sent a safe one instead.")
     .replace(/ completed: (\d+) checked in by name, (?:\d+|null) modelled\./g, (m, n: string) => ` is done: ${n} ${n === "1" ? "person" : "people"} checked in.`)

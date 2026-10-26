@@ -1,7 +1,9 @@
-// QUANTUM is a name, not a technology: there is no quantum computing and, in
-// this demo, no language model. Answers come from a deterministic composer over
-// reviewed or clearly-labelled content, and a validator checks every draft. The
-// contracts below are the ones a live model would have to satisfy too.
+// QUANTUM (the Quantum Health Coach) is a name, not a technology: there is no
+// quantum computing. Answers come from a deterministic composer over reviewed or
+// clearly-labelled content, and a validator checks every draft. When a language
+// model is switched on, it may write only the kind, personal lines and choose
+// which approved tips to lean on; the facts stay the tips' own words, and the
+// same validator decides whether its draft is sent.
 
 import type { ActivitySource, EventId, RacePath, RulesetVersion } from "../types";
 
@@ -91,6 +93,21 @@ export interface Check {
   detail: string;
 }
 
+/** Who wrote the words: the approved tips alone, or the AI inside them. */
+export type Generator = "deterministic-composer" | "ai-model";
+
+/**
+ * What the AI may contribute to an answer: a few kind, personal lines in its
+ * own words, and which approved tips to lean on (by id, most relevant first).
+ * It never writes a fact, a boundary, a help line or a next step.
+ */
+export interface AiDraft {
+  heard: string[];
+  cards: string[];
+  /** The model that wrote it, for the record. */
+  model: string;
+}
+
 export interface CoachAnswer {
   id: string;
   memberId: string;
@@ -112,6 +129,8 @@ export interface CoachAnswer {
   checks: Check[];
   /** When the drafting step produced something unsafe and the validator replaced it. */
   rejectedDraft: { text: string; failed: string[] } | null;
-  generator: "deterministic-composer";
+  generator: Generator;
+  /** The model behind an AI-written answer; null when the approved tips answered alone. */
+  model: string | null;
   attributions: string[];
 }

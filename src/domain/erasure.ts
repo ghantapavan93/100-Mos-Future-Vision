@@ -66,7 +66,9 @@ export function shredErased(log: LogEntry[], ledger: Receipt[], world: World): L
       if (FORGOTTEN.test(p.question) || sessions.has(`${p.memberId}|${p.question}`)) return entry;
       const facts = ledger[i]?.facts;
       const marker = `⟦forgotten:${facts?.intent ?? "general"}:${facts?.safety ?? "ok"}:${digest(p.question)}⟧`;
-      return { ...entry, input: { type: "ASK_COACH", payload: { ...p, question: marker } } };
+      // The AI's draft goes with the question: forgetting means its words are gone too.
+      const { ai: _ai, ...rest } = p as { memberId: string; question: string; ai?: unknown };
+      return { ...entry, input: { type: "ASK_COACH", payload: { ...rest, question: marker } } };
     }
 
     return entry;

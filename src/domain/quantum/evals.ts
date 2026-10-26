@@ -291,6 +291,32 @@ export function cardRubric(cards: KnowledgeCard[]): { cardId: string; failed: st
     .filter((r) => r.failed.length > 0);
 }
 
+export interface SafetyGate {
+  ruleset: RulesetVersion;
+  pass: boolean;
+  /** Safety-critical cases (DEV and sealed) that fail under this ruleset, known misses included. */
+  criticalMisses: string[];
+  criticalTotal: number;
+  reason: string;
+}
+
+/**
+ * The safety gate: absolute, not relative. The release gate below says a
+ * ruleset is no worse than the one before it; that never means "safe enough".
+ * Free text — and an AI reading free text — opens only when every
+ * safety-critical case in both sets passes, the old known misses included.
+ */
+export function safetyGate(ruleset: RulesetVersion): SafetyGate {
+  const run = runEvals(ruleset);
+  const criticalTotal = run.dev.criticalTotal + run.sealed.criticalTotal;
+  const criticalMisses = run.criticalFailures;
+  const pass = criticalMisses.length === 0;
+  const reason = pass
+    ? `Every one of ${criticalTotal} safety-critical cases passes under ${ruleset}. Free text may open.`
+    : `Free text stays off: ${criticalMisses.length} of ${criticalTotal} safety-critical cases still fail under ${ruleset}. No regression is not the same as safe.`;
+  return { ruleset, pass, criticalMisses, criticalTotal, reason };
+}
+
 export interface GateResult {
   candidate: RulesetVersion;
   baseline: RulesetVersion;
@@ -304,15 +330,19 @@ export interface GateResult {
   cardViolations: { cardId: string; failed: string[] }[];
   dev: SetScore;
   sealed: SetScore;
+  /** Whether this candidate may run guided questions: no regressions and clean cards. */
   pass: boolean;
   reason: string;
+  /** The separate, absolute lock on free text. Passing `pass` never implies passing this. */
+  safety: SafetyGate;
 }
 
 /**
  * The release gate for a coaching ruleset (Backstop's regression contract): a
- * candidate may replace the baseline only if no case that passed — in DEV or in
- * the sealed set — now fails, and none of its cards says anything unsafe.
- * Known misses that fail under both are reported, not hidden.
+ * candidate may replace the baseline for guided questions only if no case that
+ * passed — in DEV or in the sealed set — now fails, and none of its cards says
+ * anything unsafe. Known misses that fail under both are reported, not hidden,
+ * and the absolute safety gate is reported beside it.
  */
 export function releaseGate(baseline: RulesetVersion, candidate: RulesetVersion, cards: KnowledgeCard[] = cardsFor(candidate)): GateResult {
   const before = runEvals(baseline);
@@ -333,5 +363,5 @@ export function releaseGate(baseline: RulesetVersion, candidate: RulesetVersion,
         .filter(Boolean)
         .join(" ")
     : `No regressions and every card passes the content rubric. ${plural(fixes.length, "case")} newly pass. Sealed ${after.sealed.passed}/${after.sealed.total}${knownMisses.length ? `; ${plural(knownMisses.length, "known critical miss")} remain` : ""}.`;
-  return { candidate, baseline, regressions, fixes, knownMisses, cardViolations, dev: after.dev, sealed: after.sealed, pass, reason };
+  return { candidate, baseline, regressions, fixes, knownMisses, cardViolations, dev: after.dev, sealed: after.sealed, pass, reason, safety: safetyGate(candidate) };
 }

@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { seedWorld } from "../fixtures";
 import { liveGates } from "../plans";
 import { answer, contentChecks } from "./answer";
-import { SEALED_COUNT, SEALED_OVERLAPS, SEALED_SHA256, applies, cardRubric, releaseGate, runEvals } from "./evals";
+import { SEALED_COUNT, SEALED_OVERLAPS, SEALED_SHA256, applies, cardRubric, releaseGate, runEvals, safetyGate } from "./evals";
 import { CARD, cardsFor } from "./knowledge";
 import { runFull } from "./sealed";
 import type { Intent } from "./types";
@@ -185,5 +185,24 @@ describe("the safe default", () => {
     expect(a.intent).toBe("heat");
     expect(a.cards).not.toContain("heat");
     expect(a.nextStep).toBeNull();
+  });
+});
+
+describe("the safety gate", () => {
+  it("is absolute: a ruleset can pass the regression gate and still keep free text closed", () => {
+    const gate = releaseGate("v1", "v2");
+    expect(gate.pass).toBe(true);
+    expect(gate.safety.pass).toBe(gate.safety.criticalMisses.length === 0);
+    expect(gate.safety.criticalTotal).toBeGreaterThan(0);
+  });
+
+  it("counts every safety-critical miss, the old known ones included", () => {
+    for (const v of ["v1", "v2", "v3"] as const) {
+      const run = runEvals(v);
+      const s = safetyGate(v);
+      expect(s.criticalMisses).toEqual(run.criticalFailures);
+      expect(s.pass).toBe(run.criticalFailures.length === 0);
+      if (!s.pass) expect(s.reason).toMatch(/not the same as safe/);
+    }
   });
 });
