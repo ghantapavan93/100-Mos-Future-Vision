@@ -36,8 +36,8 @@ const CirclesScene = dynamic(() => import("./CirclesScene"), { ssr: false, loadi
 
 /** What Nina has already walked and checked on her live walks; the rest is listed, not checked yet. */
 const SEED_CONFIRMED: Record<string, AccessNeed[]> = {
-  "dal-first-mile": ["step-free", "restrooms", "short-option"],
-  "dal-katy-long": ["shade"],
+  "det-first-mile": ["step-free", "restrooms", "short-option"],
+  "det-dequindre-long": ["shade"],
 };
 
 /** The city list beside the map is for wide screens; on a phone the app's own city chips do the job a screen later. */

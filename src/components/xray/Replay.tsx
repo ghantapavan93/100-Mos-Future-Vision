@@ -285,7 +285,7 @@ export function Replay({ onShow }: { onShow: (seq: number) => void }) {
           <Stat label="Season clock" value={<span className="text-[15px]">{tickLabel(w.clock)}</span>} />
           <Stat label="Maya's miles" value={seasonMiles(w, "maya")} />
           <Stat label="Sarah's miles" value={seasonMiles(w, "sarah")} />
-          <Stat label="Detroit total" value={(w.projections.chapterSharedMiles.dallas ?? 0).toLocaleString("en-US")} note="as displayed" />
+          <Stat label="Detroit total" value={(w.projections.chapterSharedMiles.detroit ?? 0).toLocaleString("en-US")} note="as displayed" />
           <Stat label="Impact pool" value={`$${impactPool(w).available.toLocaleString("en-US")}`} note="available, signed only" />
           <Stat label="Coach ruleset" value={w.coach.activeRuleset} note={w.coach.drift ? "drift ON" : "drift off"} />
         </div>

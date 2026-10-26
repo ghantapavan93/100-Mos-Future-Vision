@@ -16,9 +16,9 @@ import { actors, store } from "@/lib/store";
 export const MAYA = "maya";
 export const NINA = actors.organizer("nina");
 /** Nina leads Detroit (the sample chapter's id predates the move to real cities). */
-export const LEAD_CITY: ChapterId = "dallas";
+export const LEAD_CITY: ChapterId = "detroit";
 /** The walk the tour and the guest doorway meet at. */
-export const SATURDAY = "dal-first-mile";
+export const SATURDAY = "det-first-mile";
 
 /** Whose phone it is: a guest with no app (from a poster), Maya the member, or Nina the City Lead. */
 export type CirclesMode = "guest" | "member" | "lead";

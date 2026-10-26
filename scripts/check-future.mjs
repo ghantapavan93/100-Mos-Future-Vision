@@ -109,7 +109,7 @@ await step("two sponsors pay through the engine; the goal turns green", async ()
   await phone().getByRole("button", { name: "Sponsor pays" }).click();
   await page.waitForFunction(() => document.querySelector('[data-check="pilots"]')?.getAttribute("data-pass") === "true", null, { timeout: 8000 });
   const paid = await page.evaluate(() => {
-    const w = JSON.parse(sessionStorage.getItem("fl4.log.v1") ?? "{}");
+    const w = JSON.parse(sessionStorage.getItem("fl4.log.v2") ?? "{}");
     return (w.log ?? []).filter((e) => e.input?.type === "RECORD_PAYMENT").length;
   });
   if (paid < 2) throw new Error(`${paid} payments in the session log`);

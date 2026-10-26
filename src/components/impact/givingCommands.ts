@@ -28,7 +28,7 @@ export function sponsorPays(w: World): Cmd[] {
   const p = w.proposals["pr-northline"];
   if (!p) return [];
   const out: Cmd[] = [];
-  if (p.chapterIds.length < 2) out.push({ input: { type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: p.id, chapterIds: ["dallas", "atlanta"] } }, actor: actors.founder });
+  if (p.chapterIds.length < 2) out.push({ input: { type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: p.id, chapterIds: ["detroit", "charleston"] } }, actor: actors.founder });
   if (p.signedAt === null) out.push({ input: { type: "ADVANCE_DEAL", payload: { proposalId: p.id } }, actor: actors.founder });
   if (p.paidAt === null) out.push({ input: { type: "RECORD_PAYMENT", payload: { proposalId: p.id } }, actor: actors.founder });
   if (p.stage === "proposal" || p.stage === "contract") out.push({ input: { type: "ADVANCE_DEAL", payload: { proposalId: p.id } }, actor: actors.founder });
@@ -48,14 +48,14 @@ export function walkIt(w: World, programId: string): Cmd[] {
   const prog = w.programs[programId];
   if (!prog || prog.fundedAt === null || stageIndex(prog.stage) < stageIndex("funded")) return [];
   const title = walkTitle(programId);
-  const walk = Object.values(w.events).find((e) => e.chapterId === "dallas" && e.title === title && e.fundedBy === null && e.status !== "cancelled" && tick(e.day, e.startMinute) >= prog.fundedAt!);
+  const walk = Object.values(w.events).find((e) => e.chapterId === "detroit" && e.title === title && e.fundedBy === null && e.status !== "cancelled" && tick(e.day, e.startMinute) >= prog.fundedAt!);
   const out: Cmd[] = [];
   if (!walk) {
     const day = Math.floor(w.clock / 1440) + 1;
     out.push({
       input: {
         type: "DRAFT_EVENT",
-        payload: { chapterId: "dallas", title, day, startMinute: 8 * 60, meetingArea: "Belle Isle, Casino lawn", distanceOptions: [1, 2], mode: "walk", access: ["step-free", "short-option", "shade"], capacity: 40 },
+        payload: { chapterId: "detroit", title, day, startMinute: 8 * 60, meetingArea: "Belle Isle, Casino lawn", distanceOptions: [1, 2], mode: "walk", access: ["step-free", "short-option", "shade"], capacity: 40 },
       },
       actor: NINA,
     });

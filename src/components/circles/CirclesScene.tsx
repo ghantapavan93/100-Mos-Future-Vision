@@ -47,8 +47,8 @@ const TALLEST = 3;
  */
 const NUDGE: Record<string, [number, number]> = {
   chicago: [-0.75, 0],
-  dallas: [0.8, -0.1],
-  atlanta: [-0.95, -0.62],
+  detroit: [0.8, -0.1],
+  charleston: [-0.95, -0.62],
   durham: [0.3, 0.1],
   nyc: [0.45, -0.15],
   montreal: [-1.2, 0.5],

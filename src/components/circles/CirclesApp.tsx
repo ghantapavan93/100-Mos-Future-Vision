@@ -29,7 +29,7 @@ export type { CirclesDemo, CirclesMode, Guest, LeadTab } from "./phoneUi";
 /** The walk the giving program pays for; it belongs to the Giving screen, not to Nina's own posts. */
 export const IMPACT_WALK_TITLES = new Set(["Neighborhood Walk, the members' pick", "Community walk, the members' pick"]);
 
-const CITY_ORDER: ChapterId[] = ["chicago", "dallas", "atlanta", "nyc", "la", "durham", "montreal"];
+const CITY_ORDER: ChapterId[] = ["chicago", "detroit", "charleston", "nyc", "la", "durham", "montreal"];
 const REASONS = ["Heat advisory", "Storm warning", "Venue issue"];
 
 /** No group walk yet, here or before this demo's week: their first group walk. */

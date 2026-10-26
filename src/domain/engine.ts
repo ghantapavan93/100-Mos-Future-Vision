@@ -536,7 +536,7 @@ const handlers: { [T in CommandType]: Handler<T> } = {
         goal: { kind: p.goalKind, target: p.target, label: p.goalLabel },
         racePath: "5k",
         chapterId: p.chapterId,
-        homeChapterId: p.chapterId ?? "dallas",
+        homeChapterId: p.chapterId ?? "detroit",
         // Joining a circle is not consent to share: every switch starts off (WA-02).
         consents: { chapter: { ...off }, coach: { ...off }, storyWall: false, partnerContact: [], needsToOrganizers: false },
         needs: p.needs,

@@ -1,6 +1,6 @@
 // The seeded world. Every person, chapter, event, partner and number below is
 // FICTIONAL demonstration data. The four personas and the V2 defaults (Maya
-// 12.4 mi, Sarah 68.7, James 31.2, Nina 44.1; Detroit (chapter id "dallas"); fee 7,500; delivery
+// 12.4 mi, Sarah 68.7, James 31.2, Nina 44.1; Detroit; fee 7,500; delivery
 // 2,800; impact 15%; 8 × 7,500 + 4 × 12,000) are preserved from Future Lab V2
 // so the two can be compared.
 
@@ -69,7 +69,7 @@ const MEMBERS: Member[] = [
     moves: ["walk"],
     goal: { kind: "season-100", target: 100, label: "Walk 100 miles by August — one comfortable mile at a time" },
     chapterId: null,
-    homeChapterId: "dallas",
+    homeChapterId: "detroit",
     consents: consents({ manual: true }),
     needs: ["restrooms", "short-option"],
     connections: connections(["healthkit", 2]),
@@ -83,8 +83,8 @@ const MEMBERS: Member[] = [
     why: "I roll with people every week. The miles are how we hang out.",
     moves: ["roll"],
     goal: { kind: "own-distance", target: 75, label: "Roll 75 miles with my Saturday crew" },
-    chapterId: "dallas",
-    homeChapterId: "dallas",
+    chapterId: "detroit",
+    homeChapterId: "detroit",
     consents: { ...consents({ manual: true, health_connect: true }, {}, true), needsToOrganizers: true },
     needs: ["step-free", "restrooms"],
     connections: connections(["health_connect", 0]),
@@ -99,8 +99,8 @@ const MEMBERS: Member[] = [
     moves: ["run", "jog"],
     goal: { kind: "race-path", target: 100, label: "100 miles, then train toward my first 10K" },
     racePath: "10k",
-    chapterId: "dallas",
-    homeChapterId: "dallas",
+    chapterId: "detroit",
+    homeChapterId: "detroit",
     consents: consents({ manual: true, healthkit: true }),
     needs: [],
     connections: connections(["healthkit", 0], ["strava", 0]),
@@ -114,8 +114,8 @@ const MEMBERS: Member[] = [
     why: "Somebody walked at the back for me once. Now I get to be that person.",
     moves: ["walk", "jog"],
     goal: { kind: "events", target: 10, label: "Help 10 beginners finish their first group mile" },
-    chapterId: "dallas",
-    homeChapterId: "dallas",
+    chapterId: "detroit",
+    homeChapterId: "detroit",
     consents: consents({ manual: true, garmin: true }, { manual: true }, true),
     needs: [],
     connections: connections(["garmin", 0, "Garmin Forerunner 265"]),
@@ -144,7 +144,7 @@ function lead(id: string, name: string, chapterId: string): Member {
   });
 }
 
-const LEADS: Member[] = [lead("marisol", "Marisol", "chicago"), lead("theo", "Theo", "atlanta"), lead("grace", "Grace", "nyc"), lead("lena", "Lena", "la"), lead("dee", "Dee", "durham"), lead("amelie", "Amélie", "montreal")];
+const LEADS: Member[] = [lead("marisol", "Marisol", "chicago"), lead("theo", "Theo", "charleston"), lead("grace", "Grace", "nyc"), lead("lena", "Lena", "la"), lead("dee", "Dee", "durham"), lead("amelie", "Amélie", "montreal")];
 
 /**
  * Split a total into n outings with deterministic, slightly uneven distances
@@ -216,7 +216,7 @@ const CHAPTERS: Chapter[] = [
     fixture: true,
   },
   {
-    id: "dallas",
+    id: "detroit",
     city: "Detroit",
     name: "Detroit Riverwalk Circle",
     backgroundMembers: 84,
@@ -229,7 +229,7 @@ const CHAPTERS: Chapter[] = [
     fixture: true,
   },
   {
-    id: "atlanta",
+    id: "charleston",
     city: "Charleston",
     name: "Charleston Waterfront Circle",
     backgroundMembers: 116,
@@ -301,8 +301,8 @@ function event(e: Omit<MovementEvent, "rsvps" | "waitlist" | "checkIns" | "funde
 
 const EVENTS: MovementEvent[] = [
   event({
-    id: "dal-first-mile",
-    chapterId: "dallas",
+    id: "det-first-mile",
+    chapterId: "detroit",
     title: "Saturday First Mile",
     mode: "mixed",
     day: 14,
@@ -319,8 +319,8 @@ const EVENTS: MovementEvent[] = [
     sweep: "james",
   }),
   event({
-    id: "dal-roll-stroll",
-    chapterId: "dallas",
+    id: "det-roll-stroll",
+    chapterId: "detroit",
     title: "Tuesday Roll & Stroll",
     mode: "mixed",
     day: 17,
@@ -336,8 +336,8 @@ const EVENTS: MovementEvent[] = [
     sweep: null,
   }),
   event({
-    id: "dal-katy-long",
-    chapterId: "dallas",
+    id: "det-dequindre-long",
+    chapterId: "detroit",
     title: "Sunday Long Walk",
     mode: "walk",
     day: 22,
@@ -371,8 +371,8 @@ const EVENTS: MovementEvent[] = [
     sweep: "marisol",
   }),
   event({
-    id: "atl-beltline",
-    chapterId: "atlanta",
+    id: "chs-waterfront",
+    chapterId: "charleston",
     title: "Waterfront Evening Walk",
     mode: "walk",
     day: 15,
@@ -557,7 +557,7 @@ const PROGRAMS: ImpactProgram[] = [
     votes: [],
     funded: 0,
     evidenceEventIds: [],
-    chapterIds: ["dallas"],
+    chapterIds: ["detroit"],
   },
   {
     id: "leaders",
@@ -570,7 +570,7 @@ const PROGRAMS: ImpactProgram[] = [
     votes: [],
     funded: 0,
     evidenceEventIds: [],
-    chapterIds: ["dallas", "atlanta"],
+    chapterIds: ["detroit", "charleston"],
   },
   {
     id: "access",
@@ -583,7 +583,7 @@ const PROGRAMS: ImpactProgram[] = [
     votes: [],
     funded: 0,
     evidenceEventIds: [],
-    chapterIds: ["dallas"],
+    chapterIds: ["detroit"],
   },
 ];
 

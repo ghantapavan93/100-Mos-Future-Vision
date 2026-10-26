@@ -844,7 +844,7 @@ function Network({ cities }: { cities: Record<string, string> }) {
   const discs = useRef<THREE.InstancedMesh>(null);
   const tmp = useMemo(() => new THREE.Vector3(), []);
   const o = useMemo(() => new THREE.Object3D(), []);
-  const others = useMemo(() => nodes.filter((n) => n.id !== "dallas"), [nodes]);
+  const others = useMemo(() => nodes.filter((n) => n.id !== "detroit"), [nodes]);
   const MINI = 7;
   const miniPlan = useMemo(() => {
     const r = seeded(31);
@@ -883,7 +883,7 @@ function Network({ cities }: { cities: Record<string, string> }) {
         nodes.forEach((n, i) => {
           o.position.set(n.at[0], 0.04, n.at[1]);
           o.rotation.set(-Math.PI / 2, 0, 0);
-          o.scale.setScalar(Math.max(0.0001, v * (n.id === "dallas" ? 2.1 : 1)));
+          o.scale.setScalar(Math.max(0.0001, v * (n.id === "detroit" ? 2.1 : 1)));
           o.updateMatrix();
           d.setMatrixAt(i, o.matrix);
         });
@@ -937,7 +937,7 @@ function Network({ cities }: { cities: Record<string, string> }) {
               text={n.city}
               // Chicago sits beside Detroit: on phones its longer label would cover Detroit's, and the card already says where it began.
               detail={first ? (portrait ? undefined : "where it began") : last ? "the newest" : undefined}
-              position={[n.at[0], n.id === "dallas" ? 2.4 : 2.1, n.at[1]]}
+              position={[n.at[0], n.id === "detroit" ? 2.4 : 2.1, n.at[1]]}
               px={portrait ? 15 : 19}
               background={first || last ? "rgba(48,24,8,0.95)" : LABEL_BG}
               color={first || last ? "#ffd2b0" : "#f7f2ea"}

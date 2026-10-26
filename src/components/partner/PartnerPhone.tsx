@@ -42,7 +42,7 @@ export const PACKAGES: { id: string; name: string; line: string; walks: number; 
 ];
 
 /** The two cities the "Try it" step suggests, in the order the ring points at them. */
-const SUGGESTED_CITIES = ["dallas", "atlanta"];
+const SUGGESTED_CITIES = ["detroit", "charleston"];
 
 const DEAL_WORDS: Record<Proposal["stage"], string> = {
   inquiry: "Talking",

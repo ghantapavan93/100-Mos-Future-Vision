@@ -193,7 +193,7 @@ export interface Decision {
 }
 
 function dealCities(w: World, p: Proposal): string {
-  const ids = p.chapterIds.length >= p.inputs.communities ? p.chapterIds : ["dallas", "atlanta"].slice(0, p.inputs.communities);
+  const ids = p.chapterIds.length >= p.inputs.communities ? p.chapterIds : ["detroit", "charleston"].slice(0, p.inputs.communities);
   return ids.map((id) => w.chapters[id]?.city ?? id).join(" and ");
 }
 
@@ -207,7 +207,7 @@ export function decisions(w: World): Decision[] {
     if (p.stage === "proposal" && e.contribution >= 0) {
       const run: Decision["run"] = [];
       if (p.chapterIds.length < p.inputs.communities) {
-        run.push({ input: { type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: p.id, chapterIds: ["dallas", "atlanta"].slice(0, p.inputs.communities) } }, actor: founder });
+        run.push({ input: { type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: p.id, chapterIds: ["detroit", "charleston"].slice(0, p.inputs.communities) } }, actor: founder });
       }
       run.push({ input: { type: "ADVANCE_DEAL", payload: { proposalId: p.id } }, actor: founder });
       out.push({

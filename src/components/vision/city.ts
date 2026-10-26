@@ -212,8 +212,8 @@ export interface CityNode {
 /** Real coordinates of 100 Miles of Summer's seven cities. */
 const LONLAT: Record<string, [number, number]> = {
   chicago: [-87.63, 41.88],
-  dallas: [-83.05, 42.33], // Detroit: the sample chapter's id predates the move to real cities.
-  atlanta: [-79.93, 32.78], // Charleston
+  detroit: [-83.05, 42.33], // Detroit: the sample chapter's id predates the move to real cities.
+  charleston: [-79.93, 32.78], // Charleston
   nyc: [-73.97, 40.68],
   la: [-118.24, 34.05],
   durham: [-78.9, 35.99],
@@ -221,14 +221,14 @@ const LONLAT: Record<string, [number, number]> = {
 };
 
 /** Opening day's baton: from Chicago, where it began in 2018, to Los Angeles, the newest city. */
-export const RELAY = ["chicago", "dallas", "durham", "atlanta", "nyc", "montreal", "la"];
+export const RELAY = ["chicago", "detroit", "durham", "charleston", "nyc", "montreal", "la"];
 
 /**
  * A constellation, not a map: east of Chicago the cities sit roughly where they
  * are; Los Angeles is pulled in so the whole network fits one frame.
  */
 export function cityNodes(names: Record<string, string>): CityNode[] {
-  const [lon0, lat0] = LONLAT.dallas!;
+  const [lon0, lat0] = LONLAT.detroit!;
   return Object.keys(LONLAT).map((id) => {
     const [lon, lat] = LONLAT[id]!;
     let x = (lon - lon0) * 1.3;

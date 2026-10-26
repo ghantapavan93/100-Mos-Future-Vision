@@ -111,8 +111,8 @@ describe("live 2027 gates", () => {
   });
 
   it("the pilot gate counts paid contracts, not signatures", () => {
-    let m = sign(initialMachine(), "pr-northline", ["dallas", "atlanta"]);
-    m = sign(m, "pr-lakeshore", ["dallas"]);
+    let m = sign(initialMachine(), "pr-northline", ["detroit", "charleston"]);
+    m = sign(m, "pr-lakeshore", ["detroit"]);
     expect(gate(m, "pilots").pass).toBe(false);
     expect(gate(m, "pilots").evidence).toMatch(/2 signed, awaiting payment/);
     m = pay(m, "pr-northline");
@@ -123,7 +123,7 @@ describe("live 2027 gates", () => {
   });
 
   it("a corrupted read model fails the screens gate until it is rebuilt", () => {
-    let m = execute(initialMachine(), { type: "CORRUPT_PROJECTION", payload: { chapterId: "dallas", delta: 300 } }, kirk).machine;
+    let m = execute(initialMachine(), { type: "CORRUPT_PROJECTION", payload: { chapterId: "detroit", delta: 300 } }, kirk).machine;
     expect(gate(m, "screens-agree").pass).toBe(false);
     m = execute(m, { type: "REBUILD_PROJECTIONS", payload: {} }, kirk).machine;
     expect(gate(m, "screens-agree").pass).toBe(true);

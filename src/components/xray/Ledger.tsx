@@ -178,7 +178,7 @@ function EmptyLedger() {
         <button
           type="button"
           className="tap rounded-xl border border-line-strong px-3 text-left text-[13.5px] font-semibold hover:border-ink"
-          onClick={go(() => store.dispatch({ type: "RSVP", payload: { memberId: "maya", eventId: "dal-first-mile" } }, actors.member("maya"), { via: "xray-starter" }))}
+          onClick={go(() => store.dispatch({ type: "RSVP", payload: { memberId: "maya", eventId: "det-first-mile" } }, actors.member("maya"), { via: "xray-starter" }))}
         >
           Maya RSVPs to Saturday First Mile
         </button>
@@ -192,7 +192,7 @@ function EmptyLedger() {
         <button
           type="button"
           className="tap rounded-xl border border-line-strong px-3 text-left text-[13.5px] font-semibold hover:border-ink"
-          onClick={go(() => store.dispatch({ type: "RSVP", payload: { memberId: "maya", eventId: "dal-first-mile" } }, actors.member("sarah"), { via: "xray-starter" }))}
+          onClick={go(() => store.dispatch({ type: "RSVP", payload: { memberId: "maya", eventId: "det-first-mile" } }, actors.member("sarah"), { via: "xray-starter" }))}
         >
           Sarah tries to RSVP on Maya's behalf
         </button>

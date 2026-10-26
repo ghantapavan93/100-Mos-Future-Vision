@@ -136,8 +136,8 @@ describe("source rules", () => {
     const strava = Object.values(w.activities).filter((a) => a.source === "strava");
     expect(strava.length).toBe(3);
     expect(strava.every((a) => a.status === "owner-panel")).toBe(true);
-    const dallas = chapterTotalFromLedger(w, "dallas");
-    expect(dallas.excluded.find((e) => e.ruleId === "STRAVA-04")?.miles).toBe(12.3);
+    const detroit = chapterTotalFromLedger(w, "detroit");
+    expect(detroit.excluded.find((e) => e.ruleId === "STRAVA-04")?.miles).toBe(12.3);
   });
 
   it("expires Strava records after 7 days", () => {
@@ -162,14 +162,14 @@ describe("source rules", () => {
 
   it("keeps HealthKit miles out of the chapter total until the member opts in", () => {
     const base = initialMachine();
-    const before = chapterTotalFromLedger(base.world, "dallas").total;
+    const before = chapterTotalFromLedger(base.world, "detroit").total;
     const { m } = chain([
-      [{ type: "JOIN_CHAPTER", payload: { memberId: "maya", chapterId: "dallas" } }, as("maya")],
+      [{ type: "JOIN_CHAPTER", payload: { memberId: "maya", chapterId: "detroit" } }, as("maya")],
     ]);
-    const joined = chapterTotalFromLedger(m.world, "dallas").total;
+    const joined = chapterTotalFromLedger(m.world, "detroit").total;
     expect(Math.round((joined - before) * 10) / 10).toBe(4.6); // manual only
     const { m: m2 } = chain([[{ type: "SET_CONSENT", payload: { memberId: "maya", purpose: "chapter", source: "healthkit", granted: true } }, as("maya")]], m);
-    expect(Math.round((chapterTotalFromLedger(m2.world, "dallas").total - before) * 10) / 10).toBe(12.4);
+    expect(Math.round((chapterTotalFromLedger(m2.world, "detroit").total - before) * 10) / 10).toBe(12.4);
   });
 
   it("refuses every individual-level partner request, even with a founder override", () => {
@@ -188,24 +188,24 @@ describe("source rules", () => {
 describe("community", () => {
   it("shows a member's RSVP on the organizer roster and survives cancellation", () => {
     const { m, receipts } = chain([
-      [{ type: "RSVP", payload: { memberId: "maya", eventId: "dal-first-mile" } }, as("maya")],
-      [{ type: "RSVP", payload: { memberId: "maya", eventId: "dal-first-mile" } }, as("maya")],
-      [{ type: "CANCEL_EVENT", payload: { eventId: "dal-first-mile", reason: "Heat advisory" } }, nina],
-      [{ type: "RSVP", payload: { memberId: "sarah", eventId: "dal-first-mile" } }, as("sarah")],
+      [{ type: "RSVP", payload: { memberId: "maya", eventId: "det-first-mile" } }, as("maya")],
+      [{ type: "RSVP", payload: { memberId: "maya", eventId: "det-first-mile" } }, as("maya")],
+      [{ type: "CANCEL_EVENT", payload: { eventId: "det-first-mile", reason: "Heat advisory" } }, nina],
+      [{ type: "RSVP", payload: { memberId: "sarah", eventId: "det-first-mile" } }, as("sarah")],
     ]);
     expect(receipts.map((r) => r.outcome)).toEqual(["applied", "noop", "applied", "rejected"]);
-    expect(m.world.events["dal-first-mile"]!.rsvps).toContain("maya");
-    expect(m.world.events["dal-first-mile"]!.status).toBe("cancelled");
+    expect(m.world.events["det-first-mile"]!.rsvps).toContain("maya");
+    expect(m.world.events["det-first-mile"]!.status).toBe("cancelled");
   });
 
   it("won't publish an event without a sweep", () => {
     const { m, receipts } = chain([
-      [{ type: "PUBLISH_EVENT", payload: { eventId: "dal-roll-stroll" } }, nina],
-      [{ type: "ASSIGN_SWEEP", payload: { eventId: "dal-roll-stroll", memberId: "nina" } }, nina],
-      [{ type: "PUBLISH_EVENT", payload: { eventId: "dal-roll-stroll" } }, nina],
+      [{ type: "PUBLISH_EVENT", payload: { eventId: "det-roll-stroll" } }, nina],
+      [{ type: "ASSIGN_SWEEP", payload: { eventId: "det-roll-stroll", memberId: "nina" } }, nina],
+      [{ type: "PUBLISH_EVENT", payload: { eventId: "det-roll-stroll" } }, nina],
     ]);
     expect(receipts.map((r) => r.outcome)).toEqual(["blocked", "applied", "applied"]);
-    expect(m.world.events["dal-roll-stroll"]!.status).toBe("published");
+    expect(m.world.events["det-roll-stroll"]!.status).toBe("published");
   });
 
   it("refuses an organizer acting outside their chapter", () => {
@@ -215,10 +215,10 @@ describe("community", () => {
 
   it("turns a check-in into counted first-party miles", () => {
     const { m } = chain([
-      [{ type: "RSVP", payload: { memberId: "maya", eventId: "dal-first-mile" } }, as("maya")],
+      [{ type: "RSVP", payload: { memberId: "maya", eventId: "det-first-mile" } }, as("maya")],
       [{ type: "ADVANCE_CLOCK", payload: { to: tick(14, 9 * 60) } }, kayla],
-      [{ type: "CHECK_IN", payload: { eventId: "dal-first-mile", memberId: "maya", distanceMi: 1 } }, nina],
-      [{ type: "CHECK_IN", payload: { eventId: "dal-first-mile", memberId: "maya", distanceMi: 1 } }, nina],
+      [{ type: "CHECK_IN", payload: { eventId: "det-first-mile", memberId: "maya", distanceMi: 1 } }, nina],
+      [{ type: "CHECK_IN", payload: { eventId: "det-first-mile", memberId: "maya", distanceMi: 1 } }, nina],
     ]);
     expect(seasonMiles(m.world, "maya")).toBe(13.4);
     expect(m.world.members.maya!.stamps.some((s) => s.kind === "first-event")).toBe(true);
@@ -227,7 +227,7 @@ describe("community", () => {
   it("rejects event titles that are empty or too long, and stores special characters as plain text", () => {
     const draft = (title: string): CommandInput => ({
       type: "DRAFT_EVENT",
-      payload: { chapterId: "dallas", title, day: 30, startMinute: 480, meetingArea: "Park", distanceOptions: [1], mode: "walk", access: [], capacity: 20 },
+      payload: { chapterId: "detroit", title, day: 30, startMinute: 480, meetingArea: "Park", distanceOptions: [1], mode: "walk", access: [], capacity: 20 },
     });
     const { m, receipts } = chain([
       [draft("   "), as("maya")],
@@ -242,15 +242,15 @@ describe("community", () => {
 describe("partners and impact", () => {
   it("won't sign a losing contract without a written override", () => {
     const steps: [CommandInput, Actor][] = [
-      [{ type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: "pr-northline", chapterIds: ["dallas", "atlanta"] } }, kayla],
+      [{ type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: "pr-northline", chapterIds: ["detroit", "charleston"] } }, kayla],
       [{ type: "SET_PROPOSAL_INPUT", payload: { proposalId: "pr-northline", key: "fee", value: 2500 } }, kayla],
       [{ type: "ADVANCE_DEAL", payload: { proposalId: "pr-northline" } }, kayla],
-      [{ type: "ADVANCE_DEAL", payload: { proposalId: "pr-northline", override: "Strategic first partner in Atlanta" } }, kayla],
+      [{ type: "ADVANCE_DEAL", payload: { proposalId: "pr-northline", override: "Strategic first partner in Charleston" } }, kayla],
     ];
     const { m, receipts } = chain(steps);
     expect(receipts[2]!.outcome).toBe("blocked");
     expect(receipts[3]!.outcome).toBe("applied");
-    expect(m.world.proposals["pr-northline"]!.override).toMatch(/Atlanta/);
+    expect(m.world.proposals["pr-northline"]!.override).toMatch(/Charleston/);
   });
 
   it("funds a program only from paid impact money, and delivers only with evidence after funding", () => {
@@ -258,7 +258,7 @@ describe("partners and impact", () => {
       [{ type: "ADVANCE_PROGRAM", payload: { programId: "neighborhood" } }, kayla], // → community-review
       [{ type: "ADVANCE_PROGRAM", payload: { programId: "neighborhood" } }, kayla], // → approved (21 votes)
       [{ type: "ADVANCE_PROGRAM", payload: { programId: "neighborhood" } }, kayla], // funded? nothing paid → blocked
-      [{ type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: "pr-northline", chapterIds: ["dallas", "atlanta"] } }, kayla],
+      [{ type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: "pr-northline", chapterIds: ["detroit", "charleston"] } }, kayla],
       [{ type: "ADVANCE_DEAL", payload: { proposalId: "pr-northline" } }, kayla], // → contract (signed, not paid)
       [{ type: "ADVANCE_PROGRAM", payload: { programId: "neighborhood" } }, kayla], // still blocked: signed isn't paid
       [{ type: "RECORD_PAYMENT", payload: { proposalId: "pr-northline" } }, kayla],
@@ -268,10 +268,10 @@ describe("partners and impact", () => {
     expect(receipts.map((r) => r.outcome)).toEqual(["applied", "applied", "blocked", "applied", "applied", "blocked", "applied", "applied", "blocked"]);
     expect(impactPool(m.world)).toMatchObject({ committed: 1125, disbursed: 750, available: 375 });
 
-    // A completed Dallas walk after funding is proof — unless a partner already paid for it.
+    // A completed Detroit walk after funding is proof — unless a partner already paid for it.
     const withWalk = (fundedBy: string | null): Machine => {
       const next = structuredClone(m);
-      const walk = next.world.events["dal-first-mile"]!;
+      const walk = next.world.events["det-first-mile"]!;
       Object.assign(walk, { status: "completed", day: 60, fundedBy });
       return next;
     };
@@ -282,7 +282,7 @@ describe("partners and impact", () => {
 
   it("reports counts only and suppresses small groups", () => {
     const steps: [CommandInput, Actor][] = [
-      [{ type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: "pr-northline", chapterIds: ["dallas", "atlanta"] } }, kayla],
+      [{ type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: "pr-northline", chapterIds: ["detroit", "charleston"] } }, kayla],
       [{ type: "ADVANCE_DEAL", payload: { proposalId: "pr-northline" } }, kayla],
       [{ type: "ADVANCE_DEAL", payload: { proposalId: "pr-northline" } }, kayla],
     ];
@@ -332,22 +332,22 @@ describe("coaching governance", () => {
 
 describe("read models and replay", () => {
   it("detects a corrupted chapter total and repairs it from the ledger", () => {
-    const { m } = chain([[{ type: "CORRUPT_PROJECTION", payload: { chapterId: "dallas", delta: 250 } }, kirk]]);
+    const { m } = chain([[{ type: "CORRUPT_PROJECTION", payload: { chapterId: "detroit", delta: 250 } }, kirk]]);
     expect(verifyProjections(m.world)).toHaveLength(1);
     const { m: fixed } = chain([[{ type: "REBUILD_PROJECTIONS", payload: {} }, kirk]], m);
     expect(verifyProjections(fixed.world)).toHaveLength(0);
   });
 
   it("records refusals with the stage that refused", () => {
-    const { receipts } = chain([[{ type: "RSVP", payload: { memberId: "maya", eventId: "dal-first-mile" } }, as("sarah")]]);
+    const { receipts } = chain([[{ type: "RSVP", payload: { memberId: "maya", eventId: "det-first-mile" } }, as("sarah")]]);
     expect(receipts[0]!.outcome).toBe("rejected");
     expect(receipts[0]!.stages.find((s) => s.status === "fail")?.stage).toBe("authorize");
   });
 
   it("replays the same log to the same hash", () => {
     const log: LogEntry[] = [
-      { input: { type: "JOIN_CHAPTER", payload: { memberId: "maya", chapterId: "dallas" } }, actor: as("maya") },
-      { input: { type: "RSVP", payload: { memberId: "maya", eventId: "dal-first-mile" } }, actor: as("maya") },
+      { input: { type: "JOIN_CHAPTER", payload: { memberId: "maya", chapterId: "detroit" } }, actor: as("maya") },
+      { input: { type: "RSVP", payload: { memberId: "maya", eventId: "det-first-mile" } }, actor: as("maya") },
       { input: delivery(), actor: provider("healthkit") },
       { input: { type: "ASK_COACH", payload: { memberId: "maya", question: "Are there any groups near me?" } }, actor: as("maya") },
       { input: { type: "SET_PROPOSAL_INPUT", payload: { proposalId: "pr-northline", key: "fee", value: 9000 } }, actor: kayla },

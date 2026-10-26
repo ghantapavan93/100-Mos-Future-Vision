@@ -66,11 +66,11 @@ export function VisionScreen() {
 
   const cities = useMemo(() => Object.fromEntries(Object.values(world.chapters).map((c) => [c.id, c.city])), [world.chapters]);
   const cast = useMemo<StoryCast>(() => {
-    const walk = world.events["dal-first-mile"];
+    const walk = world.events["det-first-mile"];
     const sweep = walk?.sweep ? world.members[walk.sweep]?.name : undefined;
     // Everyone already coming to Saturday's walk, plus her.
     const already = walk ? walk.rsvps.length + (walk.backgroundRsvps ?? 0) : 17;
-    return { lead: world.chapters.dallas?.leadName ?? "Nina", sweep: sweep ?? "James", coming: already + 1 };
+    return { lead: world.chapters.detroit?.leadName ?? "Nina", sweep: sweep ?? "James", coming: already + 1 };
   }, [world]);
   const words = useMemo(() => sceneWords(cast), [cast]);
 

@@ -169,7 +169,7 @@ export interface Chapter {
   /** Fictional first-party shared miles of the background members. */
   backgroundSharedMiles: number;
   organizers: MemberId[];
-  /** Display name of the fictional chapter lead (only Dallas's lead is a modelled member). */
+  /** Display name of the fictional chapter lead (only Detroit's lead is a modelled member). */
   leadName: string;
   members: MemberId[];
   note: string;

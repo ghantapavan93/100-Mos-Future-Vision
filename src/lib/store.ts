@@ -33,7 +33,7 @@ interface State {
   ui: UIState;
 }
 
-const STORAGE_KEY = "fl4.log.v1";
+const STORAGE_KEY = "fl4.log.v2";
 
 const initialUI: UIState = { viewer: "maya", inspect: false, explain: null, present: null, toast: null, motionPaused: false };
 

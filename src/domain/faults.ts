@@ -250,8 +250,8 @@ const CORE_FAULTS: Fault[] = [
       const d = deliveries(receipts)[0];
       const quarantined = records(after, "garmin", [d?.externalId ?? ""]).some((a) => a.status === "quarantined");
       const change = delta(before, after, "nina");
-      const dallas = close(after.projections.chapterSharedMiles.dallas ?? 0, before.projections.chapterSharedMiles.dallas ?? 0);
-      return { kept: quarantined && change === 0 && dallas, evidence: `Receipt: ${receipts.at(-1)?.outcome}. Quarantined: ${quarantined ? "yes" : "no"}. Nina ${change === 0 ? "unchanged" : `+${change} mi`}; Dallas total ${dallas ? "unchanged" : "changed"}.` };
+      const detroit = close(after.projections.chapterSharedMiles.detroit ?? 0, before.projections.chapterSharedMiles.detroit ?? 0);
+      return { kept: quarantined && change === 0 && detroit, evidence: `Receipt: ${receipts.at(-1)?.outcome}. Quarantined: ${quarantined ? "yes" : "no"}. Nina ${change === 0 ? "unchanged" : `+${change} mi`}; Detroit total ${detroit ? "unchanged" : "changed"}.` };
     },
   },
   {
@@ -457,7 +457,7 @@ const CORE_FAULTS: Fault[] = [
         p = pick && pick.signedAt === null && pick.stage !== "lost" ? pick : Object.values(world.proposals).find((x) => x.stage !== "lost" && x.stage !== "renewed");
         if (!p) return [];
         if (p.chapterIds.length < p.inputs.communities) {
-          const ids = ["dallas", ...Object.keys(world.chapters).filter((c) => c !== "dallas")].slice(0, p.inputs.communities);
+          const ids = ["detroit", ...Object.keys(world.chapters).filter((c) => c !== "detroit")].slice(0, p.inputs.communities);
           out.push(entry(f, { type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: p.id, chapterIds: ids } }, founder));
         }
         const losing = economics(p.inputs).contribution < 0;
@@ -497,7 +497,7 @@ const CORE_FAULTS: Fault[] = [
       const future = Object.values(world.events)
         .filter((e) => world.chapters[e.chapterId]?.organizers.includes("nina") && e.status === "published" && e.day * 1440 + e.startMinute > world.clock)
         .sort((a, b) => b.day - a.day);
-      const target = future.find((e) => e.fundedBy) ?? future.find((e) => e.id !== "dal-first-mile") ?? future[0];
+      const target = future.find((e) => e.fundedBy) ?? future.find((e) => e.id !== "det-first-mile") ?? future[0];
       if (!target) return [];
       const out: LogEntry[] = [];
       if (!target.rsvps.includes("maya") && !target.waitlist.includes("maya")) out.push(entry(f, { type: "RSVP", payload: { memberId: "maya", eventId: target.id } }, member("maya")));
@@ -550,10 +550,10 @@ const CORE_FAULTS: Fault[] = [
     promise: "The disagreement is detected. (Repair it with “Rebuild read models”.)",
     sideEffect: "Leaves the Detroit total wrong on every screen until you rebuild.",
     build() {
-      return [entry("corrupt-total", { type: "CORRUPT_PROJECTION", payload: { chapterId: "dallas", delta: 250 } }, engineer)];
+      return [entry("corrupt-total", { type: "CORRUPT_PROJECTION", payload: { chapterId: "detroit", delta: 250 } }, engineer)];
     },
     check(_before, after) {
-      const drift = verifyProjections(after).find((d) => d.chapterId === "dallas");
+      const drift = verifyProjections(after).find((d) => d.chapterId === "detroit");
       return drift
         ? { kept: true, evidence: `Detected: Detroit shows ${drift.displayed.toLocaleString("en-US")} mi, the ledger says ${drift.fromLedger.toLocaleString("en-US")} mi.` }
         : { kept: false, evidence: "No drift detected — the check missed a corrupted total." };

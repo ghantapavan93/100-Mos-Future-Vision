@@ -226,7 +226,7 @@ export function PartnerStudio() {
               choose("pr-northline");
               const p = store.get().machine.world.proposals["pr-northline"];
               if (p && p.signedAt === null && p.chapterIds.length < 2) {
-                store.dispatch({ type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: "pr-northline", chapterIds: ["dallas", "atlanta"] } }, actors.founder, { via: "partner-ideas" });
+                store.dispatch({ type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: "pr-northline", chapterIds: ["detroit", "charleston"] } }, actors.founder, { via: "partner-ideas" });
               }
             },
           },

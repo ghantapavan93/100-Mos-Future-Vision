@@ -154,7 +154,7 @@ await step("3 · save the small step: it waits on the member's Today screen", as
   await progress(3);
   // The store persists the command log; the save must be in it, not just on screen.
   const saves = await page.evaluate(() => {
-    const saved = JSON.parse(sessionStorage.getItem("fl4.log.v1") ?? "{}");
+    const saved = JSON.parse(sessionStorage.getItem("fl4.log.v2") ?? "{}");
     return Array.isArray(saved.log) ? saved.log.filter((e) => e.input?.type === "SAVE_NEXT_STEP").length : 0;
   });
   if (saves !== 1) throw new Error(`expected one saved step in the log, found ${saves}`);

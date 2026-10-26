@@ -13,7 +13,7 @@ import { Reveal, Words } from "@/components/ui/Reveal";
 import { useWorld } from "@/lib/store";
 import { ORG_WORDS, joiners, programPrice, teamsFor, type OrgKind, type ProgramSettings } from "./programs";
 
-const DEFAULT_CITY: Record<OrgKind, string> = { employer: "chicago", university: "dallas" };
+const DEFAULT_CITY: Record<OrgKind, string> = { employer: "chicago", university: "detroit" };
 const SIZES = [300, 1200, 5000];
 
 function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {

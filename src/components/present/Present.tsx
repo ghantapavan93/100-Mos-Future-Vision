@@ -60,7 +60,7 @@ const IMPACT_WALK = "Neighborhood Walk, the members' pick";
 
 /** The walk the neighborhood program pays for: Nina's own event, never one a partner already bought. */
 function impactWalk(w: World) {
-  return Object.values(w.events).find((e) => e.chapterId === "dallas" && e.title === IMPACT_WALK && e.fundedBy === null && e.status !== "cancelled");
+  return Object.values(w.events).find((e) => e.chapterId === "detroit" && e.title === IMPACT_WALK && e.fundedBy === null && e.status !== "cancelled");
 }
 
 export const STEPS: Step[] = [
@@ -96,10 +96,10 @@ export const STEPS: Step[] = [
     how: "decide(dataClass, purpose, consents) — one function every view calls. Only Maya can flip her own switches.",
     honest: "Rule readings marked 'review' need counsel before production.",
     act: (w) => [
-      ...(w.members.maya?.chapterId !== "dallas" ? [{ input: { type: "JOIN_CHAPTER", payload: { memberId: "maya", chapterId: "dallas" } } as CommandInput, actor: maya }] : []),
+      ...(w.members.maya?.chapterId !== "detroit" ? [{ input: { type: "JOIN_CHAPTER", payload: { memberId: "maya", chapterId: "detroit" } } as CommandInput, actor: maya }] : []),
       ...(!w.members.maya?.consents.chapter.healthkit ? [{ input: { type: "SET_CONSENT", payload: { memberId: "maya", purpose: "chapter", source: "healthkit", granted: true } } as CommandInput, actor: maya }] : []),
     ],
-    done: (w) => w.members.maya?.chapterId === "dallas" && Boolean(w.members.maya?.consents.chapter.healthkit),
+    done: (w) => w.members.maya?.chapterId === "detroit" && Boolean(w.members.maya?.consents.chapter.healthkit),
   },
   {
     route: "/coach",
@@ -129,8 +129,8 @@ export const STEPS: Step[] = [
     how: "RSVP with capacity and waitlist; roster() is the organizer's minimal, consent-aware projection.",
     honest: "Chapters, organizers and attendance are fictional.",
     focus: `article[aria-label="Saturday First Mile"]`,
-    act: (w) => (w.events["dal-first-mile"]?.rsvps.includes("maya") ? [] : [{ input: { type: "RSVP", payload: { memberId: "maya", eventId: "dal-first-mile" } }, actor: maya }]),
-    done: (w) => Boolean(w.events["dal-first-mile"]?.rsvps.includes("maya")),
+    act: (w) => (w.events["det-first-mile"]?.rsvps.includes("maya") ? [] : [{ input: { type: "RSVP", payload: { memberId: "maya", eventId: "det-first-mile" } }, actor: maya }]),
+    done: (w) => Boolean(w.events["det-first-mile"]?.rsvps.includes("maya")),
   },
   {
     route: "/circles",
@@ -146,12 +146,12 @@ export const STEPS: Step[] = [
     act: (w) => {
       const out: Cmd[] = [];
       if (w.clock < tick(14, 9 * 60)) out.push({ input: { type: "ADVANCE_CLOCK", payload: { to: tick(14, 9 * 60) } }, actor: actors.system });
-      const e = w.events["dal-first-mile"];
-      if (e && !e.checkIns.some((c) => c.memberId === "maya")) out.push({ input: { type: "CHECK_IN", payload: { eventId: "dal-first-mile", memberId: "maya", distanceMi: 1 } }, actor: nina });
-      if (e && e.status !== "completed") out.push({ input: { type: "COMPLETE_EVENT", payload: { eventId: "dal-first-mile" } }, actor: nina });
+      const e = w.events["det-first-mile"];
+      if (e && !e.checkIns.some((c) => c.memberId === "maya")) out.push({ input: { type: "CHECK_IN", payload: { eventId: "det-first-mile", memberId: "maya", distanceMi: 1 } }, actor: nina });
+      if (e && e.status !== "completed") out.push({ input: { type: "COMPLETE_EVENT", payload: { eventId: "det-first-mile" } }, actor: nina });
       return out;
     },
-    done: (w) => w.events["dal-first-mile"]?.status === "completed",
+    done: (w) => w.events["det-first-mile"]?.status === "completed",
   },
   {
     route: "/partner",
@@ -166,7 +166,7 @@ export const STEPS: Step[] = [
       const p = w.proposals["pr-northline"];
       if (!p) return [];
       const out: Cmd[] = [];
-      if (p.chapterIds.length < 2) out.push({ input: { type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: "pr-northline", chapterIds: ["dallas", "atlanta"] } }, actor: actors.founder });
+      if (p.chapterIds.length < 2) out.push({ input: { type: "SET_PROPOSAL_CHAPTERS", payload: { proposalId: "pr-northline", chapterIds: ["detroit", "charleston"] } }, actor: actors.founder });
       if (p.signedAt === null) out.push({ input: { type: "ADVANCE_DEAL", payload: { proposalId: "pr-northline" } }, actor: actors.founder });
       if (p.paidAt === null) out.push({ input: { type: "RECORD_PAYMENT", payload: { proposalId: "pr-northline" } }, actor: actors.founder });
       if (p.stage === "proposal" || p.stage === "contract") out.push({ input: { type: "ADVANCE_DEAL", payload: { proposalId: "pr-northline" } }, actor: actors.founder });
@@ -208,7 +208,7 @@ export const STEPS: Step[] = [
         out.push({
           input: {
             type: "DRAFT_EVENT",
-            payload: { chapterId: "dallas", title: IMPACT_WALK, day, startMinute: 8 * 60, meetingArea: "Belle Isle, Casino lawn", distanceOptions: [1, 2], mode: "walk", access: ["step-free", "short-option", "shade"], capacity: 40 },
+            payload: { chapterId: "detroit", title: IMPACT_WALK, day, startMinute: 8 * 60, meetingArea: "Belle Isle, Casino lawn", distanceOptions: [1, 2], mode: "walk", access: ["step-free", "short-option", "shade"], capacity: 40 },
           },
           actor: nina,
         });

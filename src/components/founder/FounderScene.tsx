@@ -69,12 +69,12 @@ const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
  * rises into the gap between New York and Charleston, and Detroit and Charleston
  * lean away from each other so they never touch at narrower widths.
  */
-const LABEL_SHIFT: Record<string, [number, number]> = { montreal: [0.6, 1.2], dallas: [-0.5, 0], atlanta: [0.4, 0] };
+const LABEL_SHIFT: Record<string, [number, number]> = { montreal: [0.6, 1.2], detroit: [-0.5, 0], charleston: [0.4, 0] };
 /**
  * On a phone the six eastern cities share a thumb's width, so their names fan out into the open sky above and to
  * the right: New York and Montreal rise, Detroit leans west, Charleston and Durham step east.
  */
-const LABEL_SHIFT_PHONE: Record<string, [number, number]> = { nyc: [0.3, 1.3], montreal: [1.4, 2.1], dallas: [-1.35, 0], atlanta: [1.55, 0], durham: [1.2, -0.6] };
+const LABEL_SHIFT_PHONE: Record<string, [number, number]> = { nyc: [0.3, 1.3], montreal: [1.4, 2.1], detroit: [-1.35, 0], charleston: [1.55, 0], durham: [1.2, -0.6] };
 
 /** Window panes on the four faces of a tower, floor by floor; the bottom `lit` floors glow. */
 function useWindows(height: number, lit: number) {
