@@ -162,10 +162,10 @@ export const FEATURES: Feature[] = [
   },
   {
     id: "coach",
-    name: "QUANTUM coach card",
+    name: "Quantum Health Coach",
     route: "/coach",
     maturity: "prototype",
-    evidence: "src/domain/quantum/*: classify → policy-filtered context → cited cards → validator → proposed step. No language model in this demo.",
+    evidence: "src/domain/quantum/*: classify → policy-filtered context → cited cards → (optional AI draft: kind lines + tip ids, from /api/coach when a key is set) → validator → proposed step. Without a key, the approved tips answer alone.",
     see: "Ask a question; get a short answer built from cited cards, a boundary where one applies, and one optional next step you tap yourself.",
     why: "People need confidence and a next step, not a chatbot. The coach must never diagnose, prescribe mileage, speak as Kayla, or read data it isn't allowed to.",
     demo: { mechanism: "answer() is pure; a validator rejects any draft that diagnoses, prescribes, misattributes or leaks, and sends a safe fallback.", files: ["src/domain/quantum/answer.ts", "src/domain/quantum/classify.ts", "src/domain/quantum/knowledge.ts"] },

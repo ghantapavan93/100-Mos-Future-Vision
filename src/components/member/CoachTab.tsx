@@ -7,6 +7,8 @@ import type { MemberView } from "@/domain/selectors";
 import type { World } from "@/domain/types";
 import { Inspectable } from "@/components/inspect/Inspect";
 import { cn } from "@/components/ui/kit";
+import { aiProposal, useCoachAi } from "@/lib/coachAi";
+import { store } from "@/lib/store";
 import { InlineReceipt, useMemberAction } from "./shared";
 
 /** The missed-week question completes the member screen's "Ask the coach" step, so it carries that step's guiding ring. */
@@ -33,18 +35,31 @@ export function CoachTab({ view, world, onTab }: { view: MemberView; world: Worl
   const act = useMemberAction(m.id);
   const session = [...world.coach.sessions].reverse().find((s) => s.memberId === m.id);
   const answer = session ? world.coach.answers[session.answerId] : undefined;
+  const { status, thinking } = useCoachAi(m.id);
+  // The AI (when it's on) proposes first; the engine still decides what is sent.
+  const ask = async (question: string) => {
+    if (thinking) return;
+    const ai = await aiProposal(store.get().machine.world, m.id, question);
+    act.run({ type: "ASK_COACH", payload: { memberId: m.id, question, ...(ai ? { ai } : {}) } });
+  };
 
   return (
     <div className="space-y-4 px-4 pb-6 pt-2">
       <section aria-label="Ask the coach" className="rounded-[26px] bg-surface p-5 shadow-[var(--shadow)]">
-        <h2 className="font-[family-name:var(--font-display)] text-[24px] font-black uppercase leading-none tracking-[-0.02em]">Ask the coach</h2>
+        <h2 className="font-[family-name:var(--font-display)] text-[24px] font-black uppercase leading-none tracking-[-0.02em]">Quantum Coach</h2>
         <p className="mt-2 text-[13.5px] leading-snug text-muted">Pick a question. You get a short answer, where it comes from, and one small step you can choose to take.</p>
+        {status === "checking" ? null : (
+          <p className={cn("mt-2 w-fit rounded-full px-3 py-1 text-[12px] font-bold", status === "on" ? "bg-accent/15 text-accent-ink" : "bg-surface-2 text-muted")}>
+            {status === "on" ? "✦ AI on · every word checked" : "Approved tips only today"}
+          </p>
+        )}
         <div className="mt-4 flex flex-col gap-2">
           {QUESTIONS.map((q) => (
             <button
               key={q}
               type="button"
-              onClick={() => act.run({ type: "ASK_COACH", payload: { memberId: m.id, question: q } })}
+              onClick={() => void ask(q)}
+              aria-busy={thinking || undefined}
               className={cn("min-h-11 rounded-2xl border px-4 py-2.5 text-left text-[14px] leading-snug", answer?.question === q ? "border-ink bg-surface-2 font-semibold" : "border-line-strong hover:border-ink")}
               data-step-target={q === MISSED_WEEK ? "coach" : undefined}
             >
@@ -54,7 +69,13 @@ export function CoachTab({ view, world, onTab }: { view: MemberView; world: Worl
         </div>
       </section>
 
-      {answer ? <AnswerCard answer={answer} memberId={m.id} onTab={onTab} /> : null}
+      {thinking ? (
+        <p className="rise-in rounded-[22px] bg-surface-2 px-4 py-3 text-[14px] text-muted" data-testid="coach-thinking">
+          Writing, then checking every word…
+        </p>
+      ) : answer ? (
+        <AnswerCard answer={answer} memberId={m.id} onTab={onTab} />
+      ) : null}
       <InlineReceipt receipt={act.last} />
 
       <p className="px-1 text-[13px] leading-snug text-muted">
@@ -88,7 +109,12 @@ function AnswerCard({ answer, memberId, onTab }: { answer: CoachAnswer; memberId
   return (
     <Inspectable id="coach">
       <article aria-label="Coach's answer" className="rise-in rounded-[26px] border border-line bg-surface p-5" key={answer.id}>
-        <div className="eyebrow">You asked</div>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="eyebrow">You asked</div>
+          <span className={cn("text-[11px] font-bold uppercase tracking-[0.08em]", answer.generator === "ai-model" ? "text-accent-ink" : "text-muted")} data-testid="written-by" data-generator={answer.generator}>
+            {answer.generator === "ai-model" ? "✦ Written by AI · checked" : "From approved tips"}
+          </span>
+        </div>
         <p className="mt-1 text-[15px] font-semibold leading-snug">{answer.question}</p>
         {answer.rejectedDraft ? (
           <p className="mt-3 rounded-xl bg-warn-soft px-3 py-2 text-[13px] leading-snug text-warn">The coach caught a draft that wasn&apos;t safe and sent this answer instead.</p>

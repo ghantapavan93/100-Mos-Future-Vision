@@ -112,7 +112,7 @@ export function AnswerCard({ answer, onCite, at }: { answer: CoachAnswer; onCite
       </div>
 
       <footer className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line bg-surface-2/60 px-5 py-3 text-[12px] text-muted sm:px-7">
-        <span className="font-mono uppercase tracking-[0.06em]">Deterministic composer · no language model</span>
+        <span className="font-mono uppercase tracking-[0.06em]">{answer.generator === "ai-model" ? `AI draft (${answer.model}) · every check passed` : "Approved tips · no AI in this answer"}</span>
         <span>{answer.cards.length} cited card{answer.cards.length === 1 ? "" : "s"}</span>
         <span>{answer.checks.filter((c) => c.pass).length}/{answer.checks.length} checks passed on what you received</span>
         {answer.attributions.length ? <span>Includes data from {answer.attributions.join(", ")}</span> : null}

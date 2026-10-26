@@ -76,7 +76,7 @@ await step("fresh world: the map, the list, and the phone opens with no app — 
   await visible(phone().getByText(/Your picks stay on this page/));
   await visible(page.getByRole("region", { name: "In numbers" }));
   const text = await page.locator("main").innerText();
-  for (const word of ["Fictional", "fictional", "STRAVA-", "Receipt #", "OURS-", "WELCOME-SWEEP", "Find Your Circle", "Mile Zero", "QUANTUM", "For Kirk", "accessible route", "safe route"]) if (text.includes(word)) throw new Error(`page says "${word}"`);
+  for (const word of ["Fictional", "fictional", "STRAVA-", "Receipt #", "OURS-", "WELCOME-SWEEP", "Find Your Circle", "Mile Zero", "For Kirk", "accessible route", "safe route"]) if (text.includes(word)) throw new Error(`page says "${word}"`);
   await shot("circles-1-guest.png");
 });
 

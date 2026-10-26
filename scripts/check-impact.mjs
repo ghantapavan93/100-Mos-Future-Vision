@@ -72,7 +72,7 @@ await step("fresh season: the fund shows the promise on its way (not a $0), and 
   }
   await visible(page.getByRole("region", { name: "In numbers" }));
   const text = await page.locator("main").innerText();
-  for (const word of ["Fictional", "fictional", "IMPACT-", "verified", "Verified", "community review", "Receipt #", "pool", "Pool", "Kayla's OK", "fiscal sponsor", "501(c)", "For Kirk", "QUANTUM"]) if (text.includes(word)) throw new Error(`page still says "${word}"`);
+  for (const word of ["Fictional", "fictional", "IMPACT-", "verified", "Verified", "community review", "Receipt #", "pool", "Pool", "Kayla's OK", "fiscal sponsor", "501(c)", "For Kirk"]) if (text.includes(word)) throw new Error(`page still says "${word}"`);
   await shot("impact-1440.png");
 });
 

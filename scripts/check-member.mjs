@@ -63,7 +63,7 @@ async function ringed(page) {
 }
 
 /** Claims this screen no longer makes: her own ideas pitched back, someone else's "Mile Zero", the speed claim, Strava "never counted", lab names. */
-const RETIRED = [/Mile Zero/, /ranked by speed/i, /never counted/i, /not counted/i, /QUANTUM/, /Mile Moments/, /For Kirk/, /For Kayla/];
+const RETIRED = [/Mile Zero/, /ranked by speed/i, /never counted/i, /not counted/i, /Mile Moments/, /For Kirk/, /For Kayla/];
 async function noRetiredClaims(page) {
   const text = await page.locator("main").innerText();
   const hit = RETIRED.find((r) => r.test(text));

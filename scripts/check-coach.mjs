@@ -82,8 +82,8 @@ await page.evaluate(() => sessionStorage.clear());
 await page.reload({ waitUntil: "networkidle" });
 
 await step("the page opens on the hero, three numbers and the coach phone, with no lab in sight", async () => {
-  await visible(page.getByRole("heading", { level: 1, name: /Stuck at 10 p\.m\.\? Get a kind answer\./ }), "the headline");
-  if (!/^Ask a question/.test(await page.title())) throw new Error(`page title: ${await page.title()}`);
+  await visible(page.getByRole("heading", { level: 1, name: /An AI coach that knows your summer\./ }), "the headline");
+  if (!/^Quantum Health Coach/.test(await page.title())) throw new Error(`page title: ${await page.title()}`);
   await visible(page.getByText("Waiting for Kayla's OK — once, before May 1"), "the approval time in the legend");
   await visible(page.getByRole("region", { name: "In numbers" }).getByText("#1", { exact: true }), "the enjoyment number");
   // Nothing on the page says Kayla has already approved anything.
@@ -95,7 +95,8 @@ await step("the page opens on the hero, three numbers and the coach phone, with 
   await visible(app().getByText(/Ask me anything about moving this summer/), "the coach's hello");
   await progress(0);
   const text = await page.locator("main").innerText();
-  for (const word of [/sealed/i, /Coach Lab/, /ruleset/i, /deterministic/i, /language model in this demo/i, /QUANTUM/i, /Strava never/i, /behind glass/i, /10% rule/i]) {
+  // "Quantum Health Coach" / "Quantum Coach" is the product's name now; the bare engine word is still jargon.
+  for (const word of [/sealed/i, /Coach Lab/, /ruleset/i, /deterministic/i, /language model in this demo/i, /\bQUANTUM\b(?!\s+(?:HEALTH\s+)?COACH)/i, /Strava never/i, /behind glass/i, /10% rule/i]) {
     if (word.test(text)) throw new Error(`lab or jargon on the default page: ${word}`);
   }
   await page.screenshot({ path: `${OUT}/coach-try-0.png` });
@@ -181,7 +182,7 @@ await step("4 · knee pain: Safe Stop, a person instead of a plan, and the try-i
   await visible(last.getByTestId("safe-stop"), "the Safe Stop banner");
   if (await last.getByTestId("save-step").count()) throw new Error("Safe Stop offered a step");
   await progress(4);
-  await visible(page.locator("#try").getByText("That's the coach", { exact: false }), "the finale");
+  await visible(page.locator("#try").getByText("That's the Quantum Health Coach", { exact: false }), "the finale");
   if (await page.locator("#try .step-ring").count()) throw new Error("a guiding ring is left after the last step");
   await toTry();
   await page.screenshot({ path: `${OUT}/coach-safestop.png` });
@@ -226,7 +227,8 @@ await step("How we'd build it is closed until Kirk opens it", async () => {
   if (await details.getAttribute("open")) throw new Error("open by default");
   await details.locator("summary").click();
   await visible(details.getByText("Tips in one table"), "the first line");
-  await visible(details.getByRole("listitem").filter({ hasText: "AI wording, later" }).getByText("Large · a few weeks"), "the AI line sized as large and later");
+  await visible(details.getByRole("listitem").filter({ hasText: "The AI step" }).getByText(/^Medium/), "the AI step, sized");
+  await visible(details.getByRole("listitem").filter({ hasText: "Rules around the AI" }), "the rules around the AI");
 });
 
 await step("the lab exists only with ?lab=1, and never shows a sealed question", async () => {

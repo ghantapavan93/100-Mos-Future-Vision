@@ -18,7 +18,7 @@ import { chromium } from "playwright-core";
 const BASE = process.env.LAB_URL ?? "http://localhost:3240";
 const OUT = "shots/vision";
 const TITLES = ["Your city, moving.", "One poster. One doorway.", "A walk that fits.", "Nobody walks in alone.", "A partner funds the next walks.", "The city gets better.", "Seven cities. One summer."];
-const BANNED = ["For Kirk", "For Kayla", "QUANTUM", "Mile Zero", "Dallas", "Atlanta", "London", "ShelfTrace", "Sicily", "Verity", "ictional", "Source"];
+const BANNED = ["For Kirk", "For Kayla", "Mile Zero", "Dallas", "Atlanta", "London", "ShelfTrace", "Sicily", "Verity", "ictional", "Source"];
 
 const browser = await chromium.launch({ channel: "msedge", headless: true, args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"] });
 const problems = [];

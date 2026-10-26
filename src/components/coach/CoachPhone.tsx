@@ -5,7 +5,8 @@
 // then: tap a question, get a short answer, see "Who says?" for every card it
 // leans on, save one small step if you want it. Pain, chest symptoms or a
 // crisis get Safe Stop instead of advice: stop, and here is a real person to
-// reach.
+// reach. When the AI is on, it writes the kind part of everyday answers; every
+// answer says plainly whether the AI wrote it.
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { CARD, cardsFor } from "@/domain/quantum/knowledge";
@@ -13,6 +14,7 @@ import type { CardStatus, CoachAnswer } from "@/domain/quantum/types";
 import { AppHeader } from "@/components/demo/Phone";
 import { useMarkStep } from "@/components/demo/TryIt";
 import { cn } from "@/components/ui/kit";
+import { aiProposal, useCoachAi, type AiStatus } from "@/lib/coachAi";
 import { actors, store, useWorld } from "@/lib/store";
 import { GUIDED } from "./labels";
 
@@ -67,12 +69,14 @@ export function CoachPhone({ viewer, chipSteps = {} }: { viewer: string; chipSte
   const chips = GUIDED.filter((g) => g.needsCard === undefined || available.has(g.needsCard));
   const [sheet, setSheet] = useState<string | null>(null);
   const scroller = useRef<HTMLDivElement>(null);
+  const { status, thinking } = useCoachAi(member?.id);
+  const [waiting, setWaiting] = useState<string | null>(null);
 
-  // A new answer scrolls into view, like any chat.
+  // A new answer (or the question waiting on the AI) scrolls into view, like any chat.
   useEffect(() => {
     const el = scroller.current;
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
-  }, [sessions.length]);
+  }, [sessions.length, waiting]);
 
   // When the page's guiding ring lands on a chip scrolled out of sight, slide the chip row to it.
   const chipRow = useRef<HTMLDivElement>(null);
@@ -108,9 +112,13 @@ export function CoachPhone({ viewer, chipSteps = {} }: { viewer: string; chipSte
   }, [sheet]);
 
   if (!member) return null;
-  const ask = (question: string) => {
+  const ask = async (question: string) => {
+    if (thinking) return;
     setSheet(null);
-    store.dispatch({ type: "ASK_COACH", payload: { memberId: member.id, question } }, actors.member(member.id), { via: "coach" });
+    setWaiting(question);
+    const ai = await aiProposal(store.get().machine.world, member.id, question);
+    setWaiting(null);
+    store.dispatch({ type: "ASK_COACH", payload: { memberId: member.id, question, ...(ai ? { ai } : {}) } }, actors.member(member.id), { via: "coach" });
   };
   const sheetAnswer = sheet ? w.coach.answers[sheet] : undefined;
 
@@ -118,7 +126,7 @@ export function CoachPhone({ viewer, chipSteps = {} }: { viewer: string; chipSte
     <div className="relative flex h-full flex-col" data-testid="coach-app">
       <AppHeader
         kicker={`Asking as ${member.name}`}
-        title="Coach"
+        title="Quantum Coach"
         right={
           sessions.length ? (
             <button
@@ -136,6 +144,7 @@ export function CoachPhone({ viewer, chipSteps = {} }: { viewer: string; chipSte
         <Bubble from="coach">
           Hi {member.name}. Ask me anything about moving this summer. I&apos;ll keep it short and show you where every answer comes from.
         </Bubble>
+        <AiPill status={status} />
         <CalmNote />
         {/* An empty chat is the hardest place to start, so the first questions sit right here, big — not in a row at the bottom. */}
         {sessions.length === 0 ? (
@@ -169,6 +178,21 @@ export function CoachPhone({ viewer, chipSteps = {} }: { viewer: string; chipSte
             </div>
           );
         })}
+        {waiting ? (
+          <div className="mt-4 space-y-3" data-testid="coach-thinking">
+            <Bubble from="you">{waiting}</Bubble>
+            <div className="flex justify-start">
+              <p className="flex items-center gap-2 rounded-[22px] rounded-bl-md bg-surface-2 px-4 py-2.5 text-[14px] text-muted">
+                <span aria-hidden className="flex gap-1">
+                  {[0, 1, 2].map((i) => (
+                    <span key={i} className="size-1.5 animate-pulse rounded-full bg-accent" style={{ animationDelay: `${i * 160}ms` }} />
+                  ))}
+                </span>
+                Writing, then checking every word…
+              </p>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       <div className="shrink-0 border-t border-line bg-[color-mix(in_srgb,var(--bg)_94%,transparent)] pb-3.5 pt-3">
@@ -229,6 +253,28 @@ export function CoachPhone({ viewer, chipSteps = {} }: { viewer: string; chipSte
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** Says, before anyone asks, whether the AI is writing today or the approved tips answer alone. */
+function AiPill({ status }: { status: AiStatus }) {
+  if (status === "checking") return null;
+  return (
+    <div className="mt-2 flex justify-start" data-testid="ai-status" data-ai={status}>
+      <span className={cn("rounded-full px-3 py-1 text-[12px] font-bold", status === "on" ? "bg-accent/15 text-accent-ink" : "bg-surface-2 text-muted")}>
+        {status === "on" ? "✦ AI on · every word checked before you see it" : "Approved tips only today · the AI is switched off"}
+      </span>
+    </div>
+  );
+}
+
+/** Who wrote this answer, in one line: the AI inside approved tips, or the tips alone. */
+function WrittenBy({ answer }: { answer: CoachAnswer }) {
+  const ai = answer.generator === "ai-model";
+  return (
+    <p className={cn("text-[11.5px] font-bold uppercase tracking-[0.08em]", ai ? "text-accent-ink" : "text-muted")} data-testid="written-by" data-generator={answer.generator}>
+      {ai ? "✦ Written by AI · checked against approved tips" : "From approved tips"}
+    </p>
   );
 }
 
@@ -296,6 +342,7 @@ function Answer({ answer, memberId, saved, onWhoSays }: { answer: CoachAnswer; m
         </div>
       ) : null}
       <div className="space-y-2.5 px-4 py-3.5">
+        {stop ? null : <WrittenBy answer={answer} />}
         {heard.map((b, i) => (
           <p key={`h${i}`} className="text-[15px] leading-snug">
             {b.text}

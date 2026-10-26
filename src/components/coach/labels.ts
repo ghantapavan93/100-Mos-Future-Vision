@@ -47,6 +47,10 @@ export const CHECK_LABEL: Record<string, string> = {
   lineage: "No Strava in context",
   "no-mood-inference": "Doesn't read gaps as feelings",
   "safety-routing": "Urgent → people, not plans",
+  "ai-scope": "AI kept out of this topic",
+  "ai-own-words": "AI kept to a few kind lines",
+  "ai-no-new-facts": "AI added no facts of its own",
+  "ai-tips-only": "AI used approved tips only",
 };
 
 /**

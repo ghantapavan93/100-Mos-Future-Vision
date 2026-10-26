@@ -1,10 +1,12 @@
 "use client";
 
-// "Ask a question", for Kayla and Kirk: every tip the coach may use as a 3D wall
-// up top (her lessons first, help lines last), three numbers, then the coach
-// itself in a phone — tap a question, see "Who says?", save one small step,
-// and watch Safe Stop take over when the question is about pain. The
-// evaluation lab stays out of the way (only with ?lab=1).
+// The Quantum Health Coach, for Kayla and Kirk: every tip the coach may use as
+// a 3D wall up top (her lessons first, help lines last), three numbers, then
+// the coach itself in a phone — tap a question, see "Who says?", save one small
+// step, and watch Safe Stop take over when the question is about pain. Below:
+// how the AI thinks (lit by the last real answer), where the idea came from,
+// the two safety locks, ideas, and how it gets built. The evaluation lab stays
+// out of the way (only with ?lab=1).
 
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
@@ -24,7 +26,10 @@ import { actors, store, useUI, useWorld } from "@/lib/store";
 import { askPicture } from "./askPicture";
 import { CoachPhone, isSafeStop } from "./CoachPhone";
 import { STATUS_COLOR, type CoachSceneProps } from "./colors";
+import { FirstIdea } from "./FirstIdea";
+import { HowItThinks } from "./HowItThinks";
 import { GUIDED, INTENT_LABEL } from "./labels";
+import { SafetyProof } from "./SafetyProof";
 
 const CoachScene = dynamic(() => import("./CoachScene"), { ssr: false, loading: () => null });
 // The evaluation lab (only with ?lab=1) and its question sets load only when it is opened.
@@ -119,7 +124,9 @@ export function CoachLens() {
   const ideas: Idea[] = [
     { title: "Who says?", line: "Every answer says where it comes from, in plain words. Your lessons show only after you OK them, once, before May 1.", state: "live", origin: "new", image: ASK_PICTURE, show: () => ask("restart") },
     { title: "One small step", line: "Every answer ends with one small step, like “rest day — it counts.” Nothing happens until the member taps Save.", state: "live", origin: "new", show: () => ask("rest") },
-    { title: "Safe Stop", line: "Mention chest pain, dizziness or sharp pain and the coach says stop and get real help. It never guesses.", state: "live", origin: "new", show: () => ask("pain") },
+    { title: "Safe Stop", line: "Mention chest pain, dizziness or sharp pain and the coach says stop and get real help. It never guesses, and the AI is never asked.", state: "live", origin: "new", show: () => ask("pain") },
+    { title: "Race-ready handoff", line: "When a member wants a race plan, the coach doesn't write one — it points to a real training plan. You already work with Runna, so that conversation starts with you.", state: "next", origin: "yours" },
+    { title: "Kinder timing", line: "Before suggesting a time to go, the coach checks your city's heat and air quality and says when it's kinder to move — or that rest counts today.", state: "next", origin: "new" },
     { title: "First 10 Miles", line: "A gentle start for brand-new movers: three short walks a week, none much longer than your longest recent one. Training plans stay with real coaches.", state: "next", origin: "new" },
     { title: "Pep Talk", line: "You already record audio sessions. On a hard day, the coach could play a two-minute one of yours — only the ones you pick.", state: "next", origin: "yours" },
     { title: "Ask a Person", line: "Your 2024 hub let members ask coach questions. When the coach has no tip, it says “I don't know” and passes the question to the team. City Leads can opt in.", state: "next", origin: "yours" },
@@ -131,18 +138,18 @@ export function CoachLens() {
     <>
       <Hero
         mode="day"
-        eyebrow="Ask a question"
-        title="Stuck at 10 p.m.? *Get a kind answer.*"
-        lede="Short, kind answers about moving this summer. Nothing shows until Kayla says yes to it. Every answer says who's behind it, stops for pain, and never speaks as her."
+        eyebrow="Quantum Health Coach"
+        title="An AI coach that *knows your summer.*"
+        lede="Ask it anything about moving this summer. It reads only what you share, answers in plain, kind words from tips Kayla says yes to — and stops for pain or crisis, every time."
         actions={
           <Story
-            title="Why a *kind answer* matters"
-            stat={{ value: "2 in 3", line: "adults aren't sure AI health advice is accurate. Here, every answer shows who says so." }}
+            title="Why an *AI coach* matters"
+            stat={{ value: "2 in 3", line: "adults aren't sure AI health advice is accurate. Here, every answer shows who says so — and every word is checked first." }}
             beats={[
               { text: "New movers have small questions they're shy to ask. “Is walking enough?” “I missed two weeks — am I out?”" },
-              { text: "This gives them *a kind, short answer* at 10 p.m., when nobody else is up." },
-              { text: "Every answer comes only from tips you OK first — and each one says where it comes from." },
-              { text: "If it's about pain, it stops and points to *a real person.* It never writes training plans — those stay with real coaches." },
+              { text: "The AI gives them *a kind, personal answer* at 10 p.m., when nobody else is up — it knows their summer, because they chose to share it." },
+              { text: "The facts come only from tips you OK first. The AI writes the kind part; it never adds a fact, a plan or a diagnosis." },
+              { text: "If it's about pain or a crisis, the AI is never asked. The coach stops and points to *a real person.*" },
               { text: "And it never pushes. Feeling good on a walk is what brings people back, so it leans on *enjoy it*, not *go further.*" },
             ]}
             close="Try it on the phone below."
@@ -165,7 +172,7 @@ export function CoachLens() {
       <TryIt
         index="01"
         title="Ask it a *real question.*"
-        intro="Tap a question on the phone. Every answer shows where it comes from — and knows when to stop."
+        intro="Tap a question on the phone. Every answer says whether the AI wrote it, shows where its facts come from — and knows when to stop."
         steps={steps}
         example="The coach answered a question about coming back after a gap."
         phone={
@@ -173,7 +180,7 @@ export function CoachLens() {
             <CoachPhone viewer={viewer} chipSteps={CHIP_STEPS} />
           </Phone>
         }
-        finale={<>That&apos;s the coach: <strong>short, kind answers from tips Kayla says yes to — and a hard stop to real help when it matters.</strong></>}
+        finale={<>That&apos;s the Quantum Health Coach: <strong>kind, personal answers from tips Kayla says yes to — every word checked, and a hard stop to real help when it matters.</strong></>}
         aside={
           <div>
             <div className="eyebrow">Asking as</div>
@@ -195,21 +202,28 @@ export function CoachLens() {
         }
       />
 
-      <Ideas index="02" title="Answers that *know when to stop.*" intro="The first three work on the phone above. The rest come next, and two build on things you already do." ideas={ideas} />
+      <HowItThinks index="02" latest={latest} />
+
+      <FirstIdea index="03" />
+
+      <SafetyProof index="04" ruleset={w.coach.activeRuleset} />
+
+      <Ideas index="05" title="Answers that *know when to stop.*" intro="The first three work on the phone above. The rest come next, and three build on things you already do." ideas={ideas} />
 
       <HowWeBuild
-        index="03"
+        index="06"
         lines={[
           { what: "Tips in one table", how: "coach_cards holds each tip's topic, words, source, who approved it and when. Kayla gets a short list of tips to say yes or no to, once, before May 1. Only approved tips ever show.", effort: "S" },
-          { what: "Guided questions, not a chat box", how: "A FlutterFlow page with topic chips. A Supabase function picks the tip for the topic. No AI, and nothing new to host.", effort: "M" },
-          { what: "Safety words first", how: "A fixed word list (chest pain, dizzy, hopeless…) in the same function shows help lines such as 988 and gives no fitness advice.", effort: "S" },
-          { what: "AI wording, later", how: "After Year 10, an Edge Function could add a model — only inside the same tips and checks, and only with Kayla's and a clinician's OK. Not in the Year 10 plan.", effort: "L" },
+          { what: "The AI step", how: "One Supabase Edge Function calls Claude with the question, what the member chose to share, and the approved tips. It returns kind lines and tip ids only, as JSON — never a fact of its own.", effort: "M" },
+          { what: "Rules around the AI", how: "The same rules run first: pain, crisis, food and other people's data never reach the model. Every draft runs the checks; a failing draft is never shown, and the tips answer alone.", effort: "M" },
+          { what: "Guided questions first", how: "A FlutterFlow page with topic chips. Typing your own question opens only when every safety-critical test passes.", effort: "S" },
+          { what: "Safety words first", how: "A fixed word list (chest pain, dizzy, hopeless…) shows help lines such as 988 and gives no fitness advice — before any AI is involved.", effort: "S" },
         ]}
-        note="Kayla gets a short list of her tips to say yes or no to, once, before May 1. Until then, the coach marks them as drafts and uses public health guidance."
+        note="Kayla says yes or no to her tips once, before May 1. Until then, the coach marks them as drafts and leans on public health guidance. The AI key lives in Supabase secrets, never in the app."
       />
 
       {lab ? (
-        <section className="mx-auto w-full max-w-[1320px] px-4 pb-24 sm:px-6 lg:px-8" aria-label="Coach Lab">
+        <section id="coach-lab" className="mx-auto w-full max-w-[1320px] px-4 pb-24 sm:px-6 lg:px-8" aria-label="Coach Lab">
           <CoachLab />
         </section>
       ) : null}
