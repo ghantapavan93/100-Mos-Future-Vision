@@ -14,7 +14,7 @@
 //      the coach): receipts carry digests, so erasing the source never breaks the chain.
 // The engine is pure and deterministic: replaying the same commands gives the same hash.
 
-import { SEASON, tick } from "./calendar";
+import { SEASON, dayLabel, tick, timeLabel } from "./calendar";
 import { schemas, HARNESS_COMMANDS, type CommandInput, type CommandType, type Payload } from "./commands";
 import { economics, usd } from "./finance";
 import { diff, fnv1a, hashOf, type Change } from "./hash";
@@ -24,6 +24,8 @@ import { answer } from "./quantum/answer";
 import { FORGOTTEN } from "./quantum/classify";
 import { releaseGate } from "./quantum/evals";
 import { seedWorld } from "./fixtures";
+import { activeCities, blankProposal, buyerOf, commissionFor, crewById, crewMember, leadChecks, listOf, quoteInputs, readiness, renewalTerms, rescope, signingGate } from "./commission/model";
+import type { Commission, Coverage } from "./commission/types";
 import {
   DEAL_STAGES,
   IMPACT_STAGES,
@@ -512,6 +514,21 @@ function launchCampaign(ctx: Ctx, p: Proposal): string[] {
     created.push(id);
   }
   return created;
+}
+
+/** A partner crew's lead joins the city's circle as a co-organizer and leads that city's funded walks. */
+function onboardCrews(ctx: Ctx, c: Commission, p: Proposal): void {
+  for (const city of c.cities) {
+    const crew = city.coverage === "crew" ? crewById(city.crewId) : undefined;
+    if (!crew) continue;
+    const chapter = ctx.w.chapters[city.chapterId]!;
+    ctx.w.members[crew.leadId] ??= crewMember(crew, ctx.at);
+    if (!chapter.members.includes(crew.leadId)) chapter.members.push(crew.leadId);
+    if (!chapter.organizers.includes(crew.leadId)) chapter.organizers.push(crew.leadId);
+    for (const id of p.fundedEventIds) if (ctx.w.events[id]!.chapterId === chapter.id) ctx.w.events[id]!.createdBy = crew.leadId;
+    refreshChapters(ctx.w, [chapter.id]);
+    ctx.note("apply", "info", `${crew.leadName} of ${crew.name} (sample crew) joins the ${chapter.city} circle as a co-organizer for these walks.`);
+  }
 }
 
 // ── Handlers ────────────────────────────────────────────────────────────────
@@ -1009,6 +1026,22 @@ const handlers: { [T in CommandType]: Handler<T> } = {
       return ok(`“${e.title}” completed: ${e.checkIns.length} checked in by name, ${e.backgroundAttended} modelled.`);
     },
   },
+  RESCHEDULE_EVENT: {
+    roles: ORGANIZER_ROLES,
+    owns: (w, a, p) => organizes(w, a, w.events[p.eventId]?.chapterId),
+    run(ctx, p) {
+      const e = eventOf(ctx.w, p.eventId);
+      if (e.status === "cancelled" || e.status === "completed") return reject("policy", `It's ${e.status}.`);
+      if (ctx.w.clock >= e.day * 1440 + e.startMinute) return reject("policy", "It has already started. Cancel it instead.");
+      if (p.day * 1440 + p.startMinute <= ctx.w.clock) return reject("input", "Pick a time that hasn't passed.");
+      if (p.day === e.day && p.startMinute === e.startMinute) return noop("It's already at that time.");
+      e.moved ??= { day: e.day, startMinute: e.startMinute, reason: p.reason };
+      e.day = p.day;
+      e.startMinute = p.startMinute;
+      const told = e.rsvps.length + e.backgroundRsvps;
+      return ok(`“${e.title}” moved to ${dayLabel(p.day)}, ${timeLabel(p.startMinute)} (${p.reason}). ${told} people would be told.`);
+    },
+  },
 
   SET_PROPOSAL_INPUT: {
     roles: ["founder"],
@@ -1049,6 +1082,12 @@ const handlers: { [T in CommandType]: Handler<T> } = {
         if (chapters.length < prop.inputs.communities) return reject("policy", `Choose ${prop.inputs.communities} different chapter${prop.inputs.communities === 1 ? "" : "s"} to deliver in before signing.`);
         const leaderless = chapters.filter((c) => ctx.w.chapters[c]!.organizers.length === 0);
         if (leaderless.length) return reject("policy", `${leaderless.map((c) => ctx.w.chapters[c]!.city).join(", ")} has no organizer to deliver it.`);
+        const commission = commissionFor(ctx.w, prop.id);
+        if (commission) {
+          const gap = signingGate(ctx.w, commission, prop);
+          if (gap) return reject("policy", gap);
+          ctx.note("policy", "pass", "Every city has a lead or crew, a step-free start and a backup sweep.");
+        }
         const lastDay = Math.max(...campaignSchedule(ctx.at, prop).map((s) => s.day));
         if (lastDay > SEASON.days - 1) return reject("policy", "One event a week from now runs past August 31. Fewer events per chapter, or sign earlier.");
         const blocking = e.flags.filter((f) => f.severity === "block");
@@ -1064,6 +1103,8 @@ const handlers: { [T in CommandType]: Handler<T> } = {
         prop.fundedEventIds = launchCampaign(ctx, prop);
         prop.issuedCodes = offerCodes(partner.name);
         ctx.note("apply", "info", `${prop.fundedEventIds.length} funded events created as submissions, with no access claims and no sweep yet; organizers check each site and publish. 20 single-use offer codes issued.`);
+        const commission = commissionFor(ctx.w, prop.id);
+        if (commission) onboardCrews(ctx, commission, prop);
       }
       if (next === "reported") {
         const report = campaignReport(ctx.w, prop.id);
@@ -1084,6 +1125,10 @@ const handlers: { [T in CommandType]: Handler<T> } = {
         const report = campaignReport(ctx.w, prop.id);
         const rate = report.eventsPlanned ? report.eventsCompleted / report.eventsPlanned : 0;
         if (rate < 0.6) return reject("policy", `Renewal unlikely: ${report.eventsCompleted} of ${report.eventsPlanned} funded events delivered.`);
+        // A commission is renewed when the buyer signs next season's proposal, not before.
+        const commission = commissionFor(ctx.w, prop.id);
+        const renewal = commission?.renewalProposalId ? ctx.w.proposals[commission.renewalProposalId] : undefined;
+        if (commission && (!renewal || renewal.signedAt === null)) return reject("policy", "Renewed means the buyer signed next season's proposal. It isn't signed yet.");
       }
       prop.stage = next;
       return ok(`${partner.name}: ${DEAL_STAGES[i]} → ${next}.`);
@@ -1147,6 +1192,133 @@ const handlers: { [T in CommandType]: Handler<T> } = {
           return ok(`${count} opted-in contact${count === 1 ? "" : "s"} shared with ${partner.name}.`);
         }
       }
+    },
+  },
+  CREATE_COMMISSION: {
+    roles: ["founder"],
+    run(ctx, p) {
+      const buyer = buyerOf(p.buyerId);
+      if (!buyer) return reject("input", "No such buyer.");
+      if (new Set(p.chapterIds).size !== p.chapterIds.length) return reject("input", "Each city can be chosen once.");
+      const proposalId = nextId(ctx.w, `pr-${buyer.id}`);
+      const proposal = blankProposal(proposalId, buyer.id, quoteInputs(buyer.kind, p.chapterIds.length, p.weeks, p.kickoff, p.fee), [...p.chapterIds]);
+      if (Math.max(...campaignSchedule(ctx.at, proposal).map((s) => s.day)) > SEASON.days - 1) return reject("policy", `${p.weeks} weekly walks from now run past August 31. Choose fewer weeks.`);
+      // Cities whose own team passes every check start covered; the rest wait for a decision.
+      const cities = p.chapterIds.map((chapterId) => ({ chapterId, coverage: (leadChecks(ctx.w, chapterId).every((x) => x.ok) ? "lead" : "pending") as Coverage, crewId: null, descopedBecause: null }));
+      ctx.w.partners[buyer.id] ??= { id: buyer.id, name: buyer.name, kind: buyer.kind, wants: buyer.wants, fixture: true };
+      ctx.w.proposals[proposalId] = proposal;
+      const id = nextId(ctx.w, "cm");
+      (ctx.w.commissions ??= {})[id] = { id, proposalId, buyerId: buyer.id, quotedFee: p.fee, kickoff: p.kickoff, cities, makeups: {}, renewalProposalId: null, createdAt: ctx.at };
+      const e = economics(proposal.inputs);
+      ctx.note("apply", "info", `Priced from the sample rates: ${e.events} walks, ${usd(e.delivery)} to deliver, ${proposal.inputs.staffHours} team hours.`);
+      for (const f of e.flags) ctx.note("policy", f.severity === "block" ? "fail" : "info", f.text);
+      const open = cities.filter((c) => c.coverage === "pending").map((c) => ctx.w.chapters[c.chapterId]!.city);
+      if (open.length) ctx.note("policy", "info", `${listOf(open)} need${open.length === 1 ? "s" : ""} a decision before signing.`);
+      const names = p.chapterIds.map((c) => ctx.w.chapters[c]!.city);
+      return ok(`${buyer.name}: one walk a week in ${listOf(names)} for ${p.weeks} weeks, ${usd(p.fee)}.`);
+    },
+  },
+  SET_COVERAGE: {
+    roles: ["founder"],
+    run(ctx, p) {
+      const c = ctx.w.commissions![p.commissionId]!;
+      const prop = ctx.w.proposals[c.proposalId]!;
+      if (prop.stage === "lost") return reject("policy", "This commission was declined.");
+      if (prop.signedAt !== null) return reject("policy", "Signed: who covers each city is locked. Delivery changes go through cancelled and makeup walks.");
+      const city = c.cities.find((x) => x.chapterId === p.chapterId);
+      if (!city) return reject("input", "That city isn't in this commission.");
+      const chapter = ctx.w.chapters[city.chapterId]!;
+      if (city.coverage === "descoped") return reject("policy", `${chapter.city} was dropped and the buyer told. Start a new commission to add it back.`);
+      const options = readiness(ctx.w, c).find((x) => x.chapterId === city.chapterId)!.options;
+      const before = structuredClone(c);
+      let what: string;
+      if (p.coverage === "lead") {
+        if (!options.lead) return reject("policy", `${chapter.city}'s own team isn't ready: ${leadChecks(ctx.w, city.chapterId).filter((x) => !x.ok).map((x) => x.detail).join(" ")}`);
+        if (city.coverage === "lead") return noop(`${chapter.leadName} already covers ${chapter.city}.`);
+        city.coverage = "lead";
+        city.crewId = null;
+        what = `${chapter.leadName} leads ${chapter.city}`;
+      } else if (p.coverage === "crew") {
+        if (!options.crew) return reject("policy", `No partner crew on file for ${chapter.city}.`);
+        if (city.coverage === "crew") return noop(`${options.crew.name} already co-hosts ${chapter.city}.`);
+        city.coverage = "crew";
+        city.crewId = options.crew.id;
+        what = `${options.crew.name} (sample crew) co-hosts ${chapter.city}`;
+      } else {
+        if (!options.descope) return reject("policy", "That's the last city. Decline the commission instead.");
+        city.coverage = "descoped";
+        city.crewId = null;
+        city.descopedBecause = p.reason ?? "no lead or crew could deliver it";
+        prop.chapterIds = prop.chapterIds.filter((x) => x !== city.chapterId);
+        what = `${chapter.city} dropped (${city.descopedBecause}). ${activeCities(c).length} cities left`;
+      }
+      const was = economics(prop.inputs).contribution;
+      prop.inputs = rescope(before, c, prop.inputs);
+      const now = economics(prop.inputs);
+      ctx.note("apply", "info", `${prop.inputs.staffHours} team hours, price ${usd(prop.inputs.fee)}.`);
+      for (const f of now.flags) ctx.note("policy", f.severity === "block" ? "fail" : "info", f.text);
+      return ok(`${what}. Contribution after giving ${usd(was)} → ${usd(now.contribution)}.`);
+    },
+  },
+  ADD_MAKEUP_WALK: {
+    roles: ["founder"],
+    run(ctx, p) {
+      const c = ctx.w.commissions![p.commissionId]!;
+      const prop = ctx.w.proposals[c.proposalId]!;
+      const e = eventOf(ctx.w, p.eventId);
+      if (e.fundedBy !== prop.id) return reject("input", "That walk isn't part of this commission.");
+      if (prop.stage !== "live") return reject("policy", `Makeup walks are added while the program is live; it's ${prop.stage}.`);
+      if (e.status !== "cancelled") return reject("policy", "Only a cancelled walk can be rerun.");
+      if (Object.values(c.makeups).includes(e.id)) return noop("Already rerun.");
+      const last = Math.max(...prop.fundedEventIds.map((id) => ctx.w.events[id]!).filter((x) => x.chapterId === e.chapterId).map((x) => x.day));
+      const day = last + 7;
+      if (day > SEASON.days - 1) return reject("policy", "No week left before August 31 to rerun it.");
+      const id = nextId(ctx.w, `ev-${e.chapterId}`);
+      ctx.w.events[id] = {
+        id,
+        chapterId: e.chapterId,
+        title: `Makeup: ${e.title}`.slice(0, 55),
+        mode: e.mode,
+        day,
+        startMinute: e.moved?.startMinute ?? e.startMinute,
+        meetingArea: e.meetingArea,
+        distanceOptions: e.distanceOptions,
+        paceNote: e.paceNote,
+        // Like every funded walk: no access claims and no sweep until the organizer checks.
+        access: [],
+        capacity: e.capacity,
+        rsvps: [],
+        waitlist: [],
+        checkIns: [],
+        backgroundRsvps: e.backgroundRsvps,
+        backgroundAttended: null,
+        status: "submitted",
+        createdBy: e.createdBy,
+        sweep: null,
+        fundedBy: prop.id,
+      };
+      prop.fundedEventIds.push(id);
+      c.makeups[id] = e.id;
+      ctx.note("apply", "info", `One more walk to run: ${usd(prop.inputs.costPerEvent + prop.inputs.organizerStipendPerEvent)} more to deliver, from the same fee.`);
+      return ok(`Makeup walk in ${ctx.w.chapters[e.chapterId]!.city} on ${dayLabel(day)}, replacing ${dayLabel(e.day)}.`);
+    },
+  },
+  PROPOSE_RENEWAL: {
+    roles: ["founder"],
+    run(ctx, p) {
+      const c = ctx.w.commissions![p.commissionId]!;
+      const prop = ctx.w.proposals[c.proposalId]!;
+      if (c.renewalProposalId) return noop("Next summer is already proposed.");
+      if (prop.reportedAt === null) return reject("policy", "Send the Community Value Report first. A renewal is priced on proof.");
+      const terms = renewalTerms(ctx.w, c);
+      if (!terms) return reject("policy", "No city held a walk, so there is nothing to renew.");
+      const id = nextId(ctx.w, `pr-${c.buyerId}-renewal`);
+      ctx.w.proposals[id] = blankProposal(id, c.buyerId, terms.inputs, terms.chapterIds);
+      c.renewalProposalId = id;
+      const e = economics(terms.inputs);
+      ctx.note("policy", "pass", "Proposed only. Nothing is signed or paid until the buyer agrees, so its giving share stays in the pipeline.", "IMPACT-POOL");
+      const names = terms.chapterIds.map((x) => ctx.w.chapters[x]!.city);
+      return ok(`${ctx.w.partners[c.buyerId]!.name}, next summer: ${listOf(names)}, ${terms.inputs.eventsPerCommunity} weeks, ${usd(e.revenue)}. Not signed, not paid.`);
     },
   },
   SELECT_PROGRAM: {
@@ -1418,13 +1590,14 @@ const handlers: { [T in CommandType]: Handler<T> } = {
 
 // ── Reference check (invariant 1: bad ids are refusals, never crashes) ──────
 
-const REFS: [key: string, table: "members" | "events" | "proposals" | "programs" | "chapters" | "partners", label: string][] = [
+const REFS: [key: string, table: "members" | "events" | "proposals" | "programs" | "chapters" | "partners" | "commissions", label: string][] = [
   ["memberId", "members", "member"],
   ["eventId", "events", "event"],
   ["proposalId", "proposals", "proposal"],
   ["programId", "programs", "program"],
   ["chapterId", "chapters", "chapter"],
   ["partnerId", "partners", "partner"],
+  ["commissionId", "commissions", "commission"],
 ];
 
 function missingRef(w: World, payload: unknown): string | null {
@@ -1433,7 +1606,7 @@ function missingRef(w: World, payload: unknown): string | null {
   for (const [key, table, label] of REFS) {
     const v = p[key];
     if (typeof v !== "string") continue;
-    if (!(w[table] as Record<string, unknown>)[v]) return `No such ${label}.`;
+    if (!((w[table] ?? {}) as Record<string, unknown>)[v]) return `No such ${label}.`;
   }
   if (Array.isArray(p.chapterIds) && p.chapterIds.some((c) => typeof c !== "string" || !w.chapters[c])) return "No such chapter.";
   return null;
@@ -1558,6 +1731,9 @@ function lensesFor(changes: Change[]): Lens[] {
         break;
       case "egress":
         out.add("partner");
+        break;
+      case "commissions":
+        out.add("partner").add("founder");
         break;
     }
   }

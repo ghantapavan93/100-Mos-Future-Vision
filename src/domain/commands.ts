@@ -89,6 +89,8 @@ export const schemas = {
   CANCEL_EVENT: z.object({ eventId: id, reason: z.string().trim().min(3).max(120) }),
   CHECK_IN: z.object({ eventId: id, memberId: id, distanceMi: z.number().positive().max(26.2) }),
   COMPLETE_EVENT: z.object({ eventId: id }),
+  /** Move a walk that hasn't started (a heat plan's earlier start, a storm day). */
+  RESCHEDULE_EVENT: z.object({ eventId: id, day: z.number().int().min(0).max(122), startMinute: z.number().int().min(0).max(1439), reason: z.string().trim().min(3).max(120) }),
 
   // ── partners and the founder ──
   SET_PROPOSAL_INPUT: z.object({
@@ -106,6 +108,22 @@ export const schemas = {
     request: z.enum(["aggregate-attendance", "participant-list", "activity-history", "health-audience", "optin-contacts"]),
     override: z.string().trim().max(240).optional(),
   }),
+
+  // ── commissions (src/domain/commission) ──
+  /** A buyer asks for one walk a week in a few cities, for a fee. It becomes a proposal plus who covers each city. */
+  CREATE_COMMISSION: z.object({
+    buyerId: id,
+    chapterIds: z.array(id).min(2).max(4),
+    weeks: z.number().int().min(3).max(8),
+    fee: z.number().finite().min(500).max(250000),
+    kickoff: z.boolean(),
+  }),
+  /** Who delivers a city: its City Lead, a partner crew, or nobody (dropped before signing). */
+  SET_COVERAGE: z.object({ commissionId: id, chapterId: id, coverage: z.enum(["lead", "crew", "descope"]), reason: z.string().trim().min(3).max(120).optional() }),
+  /** Rerun a cancelled walk a week after the city's last one. Costs one more walk. */
+  ADD_MAKEUP_WALK: z.object({ commissionId: id, eventId: id }),
+  /** Next season's proposal to the same buyer, priced on what was delivered. Never signed or paid by this. */
+  PROPOSE_RENEWAL: z.object({ commissionId: id }),
   SELECT_PROGRAM: z.object({ programId: id }),
   ADVANCE_PROGRAM: z.object({ programId: id }),
   SET_SCENARIO: z.object({

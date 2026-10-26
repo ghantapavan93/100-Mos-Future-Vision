@@ -1,3 +1,4 @@
+import type { Commission, CommissionId } from "./commission/types";
 import type { CoachAnswer } from "./quantum/types";
 
 // The one model of the Future Lab world. Every lens (member, organizer, coach,
@@ -206,6 +207,8 @@ export interface MovementEvent {
   sweep: MemberId | null;
   fundedBy: ProposalId | null;
   cancelReason?: string;
+  /** Set the first time an organizer moves the walk: when it was meant to start, and why it moved. */
+  moved?: { day: number; startMinute: number; reason: string };
 }
 
 // ── Coaching (QUANTUM) ──────────────────────────────────────────────────────
@@ -362,4 +365,6 @@ export interface World {
   pendingRetries: { key: string; command: unknown }[];
   /** Every disclosure outside a record's owner (X-04). An export with no row here cannot happen. */
   egress: Egress[];
+  /** Multi-city programs one buyer commissions (src/domain/commission). Absent until the first is created. */
+  commissions?: Record<CommissionId, Commission>;
 }
